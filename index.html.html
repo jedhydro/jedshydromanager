@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a1a0f">
+<title>HydroManager — Charleville</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a1a0f;
+  --bg2: #111f15;
+  --bg3: #172a1c;
+  --bg4: #1e3525;
+  --border: #2a4a33;
+  --border2: #1e3525;
+  --green: #4ade80;
+  --green2: #22c55e;
+  --green3: #16a34a;
+  --green-dim: #166534;
+  --amber: #fbbf24;
+  --amber-dim: #78350f;
+  --red: #f87171;
+  --red-dim: #7f1d1d;
+  --blue: #60a5fa;
+  --blue-dim: #1e3a5f;
+  --teal: #2dd4bf;
+  --text: #e2f5e8;
+  --text2: #9dc4a8;
+  --text3: #5a8a67;
+  --mono: 'DM Mono', monospace;
+  --serif: 'Fraunces', Georgia, serif;
+  --radius: 6px;
+  --radius2: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.5;overflow:hidden}
+
+/* LAYOUT */
+.app{display:grid;grid-template-rows:56px 1fr;grid-template-columns:200px 1fr;height:100vh}
+.topbar{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px}
+.topbar-logo{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--green);letter-spacing:-0.5px;font-style:italic}
+.topbar-loc{font-size:11px;color:var(--text3);margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-env{display:flex;gap:16px;font-size:11px;color:var(--text2)}
+.env-pill{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:2px 10px;display:flex;align-items:center;gap:5px}
+.env-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:12px 0;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.nav-section{font-size:9px;letter-spacing:2px;color:var(--text3);padding:10px 16px 4px;text-transform:uppercase;margin-top:6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 16px;cursor:pointer;color:var(--text2);border-left:2px solid transparent;transition:all .15s;font-size:12px}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg3);color:var(--green);border-left-color:var(--green)}
+.nav-icon{font-size:14px;width:18px;text-align:center}
+
+.main{overflow-y:auto;padding:24px;background:var(--bg)}
+.page{display:none}.page.active{display:block}
+
+/* COMPONENTS */
+h1{font-family:var(--serif);font-size:26px;font-weight:500;color:var(--text);margin-bottom:4px;font-style:italic}
+h2{font-family:var(--serif);font-size:18px;font-weight:500;color:var(--text);margin-bottom:12px}
+h3{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.subtitle{font-size:12px;color:var(--text3);margin-bottom:20px}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px 18px;margin-bottom:14px}
+.card-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.grid6{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+
+label{font-size:11px;color:var(--text3);display:block;margin-bottom:3px;letter-spacing:.5px}
+input[type=number],input[type=text],input[type=date],textarea,select{
+  width:100%;padding:7px 10px;font-size:12px;font-family:var(--mono);
+  background:var(--bg3);color:var(--text);border:1px solid var(--border);
+  border-radius:var(--radius);outline:none;transition:border .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--green3)}
+textarea{resize:vertical;min-height:70px;line-height:1.5}
+select option{background:var(--bg3)}
+
+.btn{padding:8px 18px;font-size:12px;font-family:var(--mono);border-radius:var(--radius);cursor:pointer;border:1px solid;transition:all .15s;letter-spacing:.5px}
+.btn-primary{background:var(--green3);color:#fff;border-color:var(--green3)}
+.btn-primary:hover{background:var(--green2)}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-danger{background:transparent;color:var(--red);border-color:var(--red-dim)}
+.btn-danger:hover{background:var(--red-dim)}
+.btn-sm{padding:4px 12px;font-size:11px}
+.btn-amber{background:transparent;color:var(--amber);border-color:var(--amber-dim)}
+.btn-amber:hover{background:var(--amber-dim)}
+
+.tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;font-family:var(--mono);letter-spacing:.3px}
+.tag-green{background:#14532d;color:var(--green)}
+.tag-amber{background:var(--amber-dim);color:var(--amber)}
+.tag-red{background:var(--red-dim);color:var(--red)}
+.tag-blue{background:var(--blue-dim);color:var(--blue)}
+.tag-teal{background:#134e4a;color:var(--teal)}
+.tag-dim{background:var(--bg4);color:var(--text3)}
+
+.metric{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 14px;text-align:center}
+.metric .lbl{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.metric .val{font-size:22px;font-weight:500;color:var(--green);font-family:var(--mono)}
+.metric .unit{font-size:10px;color:var(--text3)}
+
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:7px 8px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)}
+td{padding:7px 8px;border-bottom:1px solid var(--border2);color:var(--text2);vertical-align:middle}
+td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
+tr:hover td{background:var(--bg3)}
+
+.alert{padding:10px 14px;border-radius:var(--radius);border-left:3px solid;font-size:12px;margin-bottom:10px;line-height:1.6}
+.alert-warn{background:#1c1200;color:var(--amber);border-color:var(--amber)}
+.alert-ok{background:#0a2a14;color:var(--green);border-color:var(--green3)}
+.alert-info{background:#0a1a2a;color:var(--blue);border-color:var(--blue)}
+.alert-red{background:var(--red-dim);color:var(--red);border-color:var(--red)}
+
+.divider{border:none;border-top:1px solid var(--border2);margin:16px 0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab-btn{padding:8px 16px;font-size:11px;font-family:var(--mono);letter-spacing:.5px;background:transparent;color:var(--text3);border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;margin-bottom:-1px}
+.tab-btn:hover{color:var(--text2)}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green)}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* STATUS BAR */
+.status-bar{font-size:11px;color:var(--text3);padding:8px 18px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+
+/* RESULT TABLE */
+.result-good{color:var(--green)}
+.result-over{color:var(--amber)}
+.result-under{color:var(--blue)}
+
+/* MIX CARDS */
+.mix-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.mix-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:14px 16px;cursor:pointer;transition:all .15s;position:relative}
+.mix-card:hover{border-color:var(--green3);background:var(--bg3)}
+.mix-card.active-mix{border-color:var(--green);box-shadow:0 0 0 1px var(--green3)}
+.mix-card-name{font-family:var(--serif);font-size:15px;font-style:italic;color:var(--text);margin-bottom:4px}
+.mix-card-crop{font-size:11px;color:var(--text3);margin-bottom:8px}
+.mix-card-tags{display:flex;gap:4px;flex-wrap:wrap}
+.mix-preset-badge{position:absolute;top:10px;right:10px;font-size:9px;letter-spacing:1px;color:var(--text3);background:var(--bg4);padding:2px 6px;border-radius:3px;text-transform:uppercase}
+
+/* LOG ITEMS */
+.log-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:14px 16px;margin-bottom:10px}
+.log-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.log-date{font-size:11px;color:var(--green);font-family:var(--mono);white-space:nowrap}
+.log-mix-name{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--text)}
+.log-status-active{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:5px;animation:pulse 2s infinite}
+.log-status-closed{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--text3);margin-right:5px}
+
+/* PHOTO AREA */
+.photo-area{border:1px dashed var(--border);border-radius:var(--radius);padding:14px;text-align:center;cursor:pointer;color:var(--text3);font-size:12px;transition:border .15s}
+.photo-area:hover{border-color:var(--green3);color:var(--green)}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-top:8px}
+.photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid var(--border)}
+
+/* PROGRESS BAR */
+.bar-wrap{background:var(--bg4);border-radius:4px;height:6px;overflow:hidden;margin-top:4px}
+.bar{height:100%;border-radius:4px;transition:width .4s}
+.bar-green{background:var(--green3)}
+.bar-amber{background:var(--amber)}
+.bar-red{background:var(--red)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:24px;width:min(600px,95vw);max-height:85vh;overflow-y:auto}
+.modal-title{font-family:var(--serif);font-size:18px;font-style:italic;color:var(--text);margin-bottom:16px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
+
+/* TOOLTIP */
+[title]{cursor:help}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border)}
+
+/* RESPONSIVE */
+@media(max-width:700px){
+  .app{grid-template-columns:1fr;grid-template-rows:56px auto 1fr}
+  .sidebar{display:flex;flex-direction:row;overflow-x:auto;padding:4px 8px;border-right:none;border-bottom:1px solid var(--border);grid-row:2}
+  .nav-section{display:none}
+  .nav-item{padding:6px 10px;border-left:none;border-bottom:2px solid transparent;white-space:nowrap}
+  .nav-item.active{border-left:none;border-bottom-color:var(--green)}
+  .main{grid-row:3}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">🌿 HydroManager</div>
+  <div class="env-pill"><span class="env-dot"></span><span id="tb-loc">Charleville, QLD</span></div>
+  <div class="topbar-env" id="tb-env">
+    <span id="tb-temp">— °C</span>
+    <span id="tb-hum">— %RH</span>
+    <span id="tb-rain">— mm</span>
+  </div>
+  <div class="topbar-loc">
+    <span id="tb-time"></span>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="nav-section">Main</div>
+  <div class="nav-item active" onclick="nav('dashboard')"><span class="nav-icon">⬡</span>Dashboard</div>
+  <div class="nav-item" onclick="nav('calculator')"><span class="nav-icon">⚗</span>Calculator</div>
+  <div class="nav-section">Library</div>
+  <div class="nav-item" onclick="nav('mixes')"><span class="nav-icon">◈</span>Mix library</div>
+  <div class="nav-item" onclick="nav('log')"><span class="nav-icon">◷</span>Grow log</div>
+  <div class="nav-section">Environment</div>
+  <div class="nav-item" onclick="nav('environment')"><span class="nav-icon">◎</span>Environment</div>
+  <div class="nav-section">Settings</div>
+  <div class="nav-item" onclick="nav('water')"><span class="nav-icon">≋</span>Source water</div>
+  <div class="nav-item" onclick="nav('salts')"><span class="nav-icon">◇</span>Salt library</div>
+  <div class="nav-item" onclick="nav('data')"><span class="nav-icon">↯</span>Data / backup</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <h1>Dashboard</h1>
+  <div class="subtitle" id="dash-date">Loading...</div>
+  <div id="dash-active-mixes"></div>
+  <div class="grid2" style="margin-top:14px">
+    <div>
+      <h3>Active grows</h3>
+      <div id="dash-grows"></div>
+    </div>
+    <div>
+      <h3>Environment — Charleville</h3>
+      <div class="card" id="dash-env-card">
+        <div class="grid3" id="dash-env-grid"></div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text3)" id="dash-env-note">Fetching BOM data...</div>
+      </div>
+      <h3 style="margin-top:12px">Water source</h3>
+      <div class="card" id="dash-water-card"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CALCULATOR -->
+<div class="page" id="page-calculator">
+  <h1>Nutrient calculator</h1>
+  <div class="subtitle">Charleville artesian water · least-squares solver</div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="calcTab('setup',this)">Setup</button>
+    <button class="tab-btn" onclick="calcTab('results',this)">Results</button>
+    <button class="tab-btn" onclick="calcTab('acid',this)">pH / Acid</button>
+    <button class="tab-btn" onclick="calcTab('save',this)">Save as mix</button>
+  </div>
+
+  <div class="tab-content active" id="ct-setup">
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Reservoir</div>
+        <div class="grid2">
+          <div><label>Volume (L)</label><input type="number" id="c-vol" value="100" min="1"></div>
+          <div><label>Load from mix</label>
+            <select id="c-load-mix" onchange="loadMixToCalc()">
+              <option value="">— select —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Source water</div>
+        <div id="calc-sw-summary"></div>
+        <button class="btn btn-ghost btn-sm" onclick="nav('water')" style="margin-top:8px">Edit source water →</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Nutrient targets (ppm)</div>
+      <div class="grid6">
+        <div><label>N-NO₃</label><input type="number" id="tN" value="120" min="0"></div>
+        <div><label>N-NH₄</label><input type="number" id="tNH4" value="0" min="0"></div>
+        <div><label>P</label><input type="number" id="tP" value="40" min="0"></div>
+        <div><label>K</label><input type="number" id="tK" value="200" min="0"></div>
+        <div><label>Ca</label><input type="number" id="tCa" value="150" min="0"></div>
+        <div><label>Mg</label><input type="number" id="tMg" value="50" min="0"></div>
+        <div><label>S</label><input type="number" id="tS" value="60" min="0"></div>
+        <div><label>Fe (ppm)</label><input type="number" id="tFe" value="2" min="0" step="0.1"></div>
+        <div><label>Target pH</label><input type="number" id="t-ph" value="5.8" min="4" max="8" step="0.1"></div>
+        <div><label>Target EC</label><input type="number" id="t-ec" value="2.0" min="0" step="0.1"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Active salts</div>
+      <div id="salt-toggles"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="runSolver()" style="width:100%">Solve ↗</button>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">Solver weights — nutrient priority</div>
+      <table style="font-size:12px">
+        <thead><tr><th>Nutrient</th><th>Weight</th><th>Penalty multiplier</th><th>Rationale</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Ca</strong></td><td><span style="color:var(--green)">3.0</span></td><td style="color:var(--green)">9×</td><td style="color:var(--text3)">Immobile — deficiency causes BER, tip burn immediately. Cannot be recovered from old growth.</td></tr>
+          <tr><td><strong>K</strong></td><td><span style="color:var(--amber)">2.5</span></td><td style="color:var(--amber)">6.25×</td><td style="color:var(--text3)">Fruit quality, water regulation. Excess K competitively blocks Ca and Mg uptake.</td></tr>
+          <tr><td><strong>Mg</strong></td><td><span style="color:var(--amber)">2.0</span></td><td style="color:var(--amber)">4×</td><td style="color:var(--text3)">Centre of chlorophyll molecule. Inhibited by excess K⁺ and Ca²⁺ in closed systems.</td></tr>
+          <tr><td><strong>N-NH₄</strong></td><td><span style="color:var(--amber)">2.0</span></td><td style="color:var(--amber)">4×</td><td style="color:var(--text3)">Narrow safe range — excess causes root toxicity and solution pH crash.</td></tr>
+          <tr><td><strong>N-NO₃</strong></td><td><span style="color:var(--text2)">1.5</span></td><td style="color:var(--text2)">2.25×</td><td style="color:var(--text3)">Wide tolerance range. Plants buffer NO₃ variation well. Fast uptake self-corrects.</td></tr>
+          <tr><td><strong>P</strong></td><td><span style="color:var(--text3)">1.0</span></td><td style="color:var(--text3)">1×</td><td style="color:var(--text3)">Broadest working range of all macronutrients. Over-dose risks precipitating with Ca.</td></tr>
+          <tr><td><strong>S</strong></td><td><span style="color:var(--text3)">1.0</span></td><td style="color:var(--text3)">1×</td><td style="color:var(--text3)">Semi-mobile, wide tolerance, slow deficiency onset. Accumulates in recirculating systems.</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px">When the system is overdetermined (more targets than salts), the solver sacrifices P and S accuracy first to protect Ca, K and Mg. Based on: Penn State Extension, UF/IFAS, Frontiers in Plant Science, ScienceDirect NFT research.</div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="ct-results">
+    <div id="calc-results-content"><div style="color:var(--text3);text-align:center;padding:40px">Run the solver first →</div></div>
+  </div>
+
+  <div class="tab-content" id="ct-acid">
+    <div class="card">
+      <div class="card-title">pH / Alkalinity correction</div>
+      <div class="alert alert-info">Charleville source water alkalinity: <strong>153 mg/L as CaCO₃</strong> (HCO₃ ≈ 186 mg/L). Source pH: 8.55. Acid is required to bring the solution to your target pH.</div>
+      <div class="grid3" style="margin-top:12px">
+        <div><label>Source alkalinity (mg/L CaCO₃)</label><input type="number" id="acid-alk" value="153" min="0"></div>
+        <div><label>Target alkalinity (mg/L CaCO₃)</label><input type="number" id="acid-alk-target" value="30" min="0"></div>
+        <div><label>Acid type</label>
+          <select id="acid-type">
+            <option value="h3po4">Phosphoric acid H₃PO₄ (75%)</option>
+            <option value="hno3">Nitric acid HNO₃ (68%)</option>
+            <option value="h2so4">Sulphuric acid H₂SO₄ (98%)</option>
+            <option value="citric">Citric acid (anhydrous)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="calcAcid()" style="margin-top:12px">Calculate acid dose</button>
+      <div id="acid-result" style="margin-top:12px"></div>
+    </div>
+    <div class="card" style="margin-top:0">
+      <div class="card-title">Acid type guide</div>
+      <table>
+        <thead><tr><th>Acid</th><th>Nutrient added</th><th>Best for</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>H₃PO₄ (phosphoric)</td><td>P</td><td>General — most common</td><td>Adds P to solution — account in solver</td></tr>
+          <tr><td>HNO₃ (nitric)</td><td>N-NO₃</td><td>High-K crops</td><td>Corrosive — handle with care</td></tr>
+          <tr><td>H₂SO₄ (sulphuric)</td><td>S</td><td>Low-Ca water</td><td>Very corrosive — dilute carefully</td></tr>
+          <tr><td>Citric acid</td><td>None</td><td>Organic/hobby</td><td>Temporary — metabolised by microbes</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-content" id="ct-save">
+    <div class="card">
+      <div class="card-title">Save current calculation as a mix</div>
+      <div class="grid2">
+        <div><label>Mix name</label><input type="text" id="save-name" placeholder="e.g. Tomato veg week 3"></div>
+        <div><label>Crop</label>
+          <select id="save-crop">
+            <option>Strawberry</option><option>Tomato</option><option>Lettuce / leafy greens</option>
+            <option>Cucumber</option><option>Capsicum / pepper</option><option>Herbs</option><option>Other</option>
+          </select>
+        </div>
+        <div><label>Growth stage</label>
+          <select id="save-stage">
+            <option>Seedling / propagation</option><option>Vegetative growth</option>
+            <option>Flowering / fruiting</option><option>Late fruiting / flush</option>
+          </select>
+        </div>
+        <div><label>Notes</label><input type="text" id="save-notes" placeholder="Optional notes"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveCurrentMix()" style="margin-top:12px">Save mix</button>
+      <div id="save-feedback" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MIX LIBRARY -->
+<div class="page" id="page-mixes">
+  <div class="row" style="margin-bottom:16px">
+    <h1 style="margin-bottom:0">Mix library</h1>
+    <div class="spacer"></div>
+    <select id="mix-filter-crop" onchange="renderMixes()" style="width:160px">
+      <option value="">All crops</option>
+      <option>Strawberry</option><option>Tomato</option><option>Lettuce / leafy greens</option>
+      <option>Cucumber</option><option>Capsicum / pepper</option><option>Herbs</option>
+    </select>
+    <select id="mix-filter-stage" onchange="renderMixes()" style="width:160px">
+      <option value="">All stages</option>
+      <option>Seedling / propagation</option><option>Vegetative growth</option>
+      <option>Flowering / fruiting</option><option>Late fruiting / flush</option>
+    </select>
+  </div>
+  <div class="mix-grid" id="mix-grid"></div>
+</div>
+
+<!-- MIX DETAIL MODAL -->
+<div class="modal-overlay" id="mix-modal">
+  <div class="modal">
+    <div id="mix-modal-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeMixModal()">Close</button>
+      <button class="btn btn-amber btn-sm" onclick="cloneMix()">Clone & edit</button>
+      <button class="btn btn-primary btn-sm" onclick="loadMixToCalcFromModal()">Load into calculator</button>
+      <button class="btn btn-primary btn-sm" onclick="startGrowFromModal()">Start grow →</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROW LOG -->
+<div class="page" id="page-log">
+  <div class="row" style="margin-bottom:16px">
+    <h1 style="margin-bottom:0">Grow log</h1>
+    <div class="spacer"></div>
+    <button class="btn btn-primary btn-sm" onclick="openNewGrow()">+ New grow</button>
+  </div>
+  <div id="log-list"></div>
+</div>
+
+<!-- NEW GROW MODAL -->
+<div class="modal-overlay" id="grow-modal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-title">Start new grow</div>
+
+    <h3 style="margin-bottom:8px">Plant details</h3>
+    <div class="grid3" style="margin-bottom:12px">
+      <div><label>Crop</label>
+        <select id="grow-crop">
+          <option value="">— from mix —</option>
+          <option>Strawberry</option><option>Tomato</option><option>Lettuce / leafy greens</option>
+          <option>Cucumber</option><option>Capsicum / pepper</option><option>Herbs</option>
+          <option>Spinach</option><option>Silverbeet / Chard</option><option>Kale</option>
+          <option>Beetroot</option><option>Radish</option><option>Spring onion</option>
+          <option>Celery</option><option>Bok choy</option><option>Broccoli</option>
+          <option>Chilli</option><option>Eggplant / Aubergine</option><option>Zucchini</option>
+          <option>Pumpkin / Squash</option><option>Watermelon</option><option>Melon</option>
+          <option>Beans</option><option>Peas</option><option>Other</option>
+        </select>
+      </div>
+      <div><label>Cultivar / variety</label><input type="text" id="grow-cultivar" placeholder="e.g. Roma, Tigerella, Albion"></div>
+      <div><label>Plant source</label>
+        <select id="grow-plant-source">
+          <option value="Seedling (own seed)">Seedling — own seed</option>
+          <option value="Seedling (purchased)">Seedling — purchased</option>
+          <option value="Cutting / clone">Cutting / clone</option>
+          <option value="Transplant from soil">Transplant from soil</option>
+          <option value="Tissue culture">Tissue culture</option>
+          <option value="Established plant">Established plant</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div><label>Seed / supplier source</label><input type="text" id="grow-seed-source" placeholder="e.g. Kings Seeds, local nursery"></div>
+      <div><label>Age at transplant</label><input type="text" id="grow-age" placeholder="e.g. 3 weeks, 15cm tall"></div>
+      <div><label>Root type</label>
+        <select id="grow-root-type">
+          <option value="">— optional —</option>
+          <option value="Bare root">Bare root</option>
+          <option value="Rockwool plug">Rockwool plug</option>
+          <option value="Coco plug">Coco plug</option>
+          <option value="Net pot">Net pot</option>
+          <option value="Soil plug">Soil plug</option>
+        </select>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:8px">Mix & timing</h3>
+    <div class="grid2" style="margin-bottom:12px">
+      <div><label>Mix</label><select id="grow-mix-select"></select></div>
+      <div><label>Start date</label><input type="date" id="grow-start"></div>
+    </div>
+
+    <h3 style="margin-bottom:8px">Hydroponic system</h3>
+    <div class="grid3" style="margin-bottom:12px">
+      <div><label>System type</label>
+        <select id="grow-system">
+          <option value="NFT">NFT — Nutrient Film Technique</option>
+          <option value="Dutch Bucket">Dutch Bucket (Bato)</option>
+          <option value="Stacky Tower">Stacky Tower / Vertical</option>
+          <option value="Rain Gutter">Rain Gutter Grow</option>
+          <option value="DWC">DWC — Deep Water Culture</option>
+          <option value="Ebb & Flow">Ebb & Flow / Flood & Drain</option>
+          <option value="Drip">Drip irrigation</option>
+          <option value="Kratky">Kratky (passive DWC)</option>
+          <option value="Aeroponics">Aeroponics</option>
+          <option value="Wicking">Wicking bed</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div><label>Growing medium</label>
+        <select id="grow-medium">
+          <option value="None (water only)">None (water only)</option>
+          <option value="Rockwool">Rockwool</option>
+          <option value="Coco coir">Coco coir</option>
+          <option value="Hydroton / clay pebbles">Hydroton / clay pebbles</option>
+          <option value="Perlite">Perlite</option>
+          <option value="Perlite + coco mix">Perlite + coco mix</option>
+          <option value="Gravel">Gravel</option>
+          <option value="Sand">Sand</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div><label>Environment</label>
+        <select id="grow-env">
+          <option value="Greenhouse">Greenhouse</option>
+          <option value="Outdoors">Outdoors</option>
+          <option value="Shade house">Shade house</option>
+          <option value="Indoor grow room">Indoor grow room</option>
+          <option value="Polytunnel">Polytunnel</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:8px">Plants & capacity</h3>
+    <div class="grid3" style="margin-bottom:12px">
+      <div><label>Number of plants</label><input type="number" id="grow-plants" value="1" min="1"></div>
+      <div><label>Pot / site size (L)</label><input type="number" id="grow-pot-size" placeholder="e.g. 10" min="0" step="0.5"></div>
+      <div><label>Reservoir volume (L)</label><input type="number" id="grow-vol" value="100"></div>
+      <div><label>Row / channel count</label><input type="number" id="grow-rows" placeholder="e.g. 4" min="0"></div>
+      <div><label>Plants per row</label><input type="number" id="grow-per-row" placeholder="e.g. 8" min="0"></div>
+      <div><label>Plant spacing (cm)</label><input type="number" id="grow-spacing" placeholder="e.g. 25" min="0"></div>
+    </div>
+
+    <h3 style="margin-bottom:8px">Light & schedule</h3>
+    <div class="grid3" style="margin-bottom:12px">
+      <div><label>Light source</label>
+        <select id="grow-light-source">
+          <option value="Natural sunlight">Natural sunlight</option>
+          <option value="LED">LED grow light</option>
+          <option value="HPS">HPS / HID</option>
+          <option value="Fluorescent / T5">Fluorescent / T5</option>
+          <option value="Mixed (natural + LED)">Mixed (natural + LED)</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div><label>Light hours / day</label><input type="number" id="grow-light" value="16" min="0" max="24"></div>
+      <div><label>Expected top-up interval (days)</label><input type="number" id="grow-topup" value="7"></div>
+    </div>
+
+    <h3 style="margin-bottom:8px">Location & notes</h3>
+    <div class="grid2" style="margin-bottom:10px">
+      <div><label>Location / bay label</label><input type="text" id="grow-location" placeholder="e.g. Greenhouse A, Bay 2 North"></div>
+      <div><label>Expected harvest date</label><input type="date" id="grow-harvest"></div>
+    </div>
+    <div><label>Setup notes / observations</label><textarea id="grow-notes" placeholder="Initial observations, cultivar, seed source, any relevant setup details..."></textarea></div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeGrowModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveGrow()">Start grow</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROW DETAIL MODAL -->
+<div class="modal-overlay" id="grow-detail-modal">
+  <div class="modal" style="max-width:700px">
+    <div id="grow-detail-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeGrowDetail()">Close</button>
+      <button class="btn btn-danger btn-sm" id="grow-end-btn" onclick="endGrow()">End grow</button>
+    </div>
+  </div>
+</div>
+
+<!-- ENVIRONMENT -->
+<div class="page" id="page-environment">
+  <h1>Environment</h1>
+  <div class="subtitle">Charleville, QLD — BOM station data + manual override</div>
+  <div class="alert alert-info" id="env-bom-status">Attempting to load BOM reference data for Charleville (station 044021)...</div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Current conditions (manual entry / override)</div>
+      <div class="grid3">
+        <div><label>Air temp (°C)</label><input type="number" id="env-temp" step="0.1" placeholder="e.g. 28.5"></div>
+        <div><label>Humidity (%)</label><input type="number" id="env-hum" min="0" max="100" placeholder="e.g. 45"></div>
+        <div><label>Rainfall today (mm)</label><input type="number" id="env-rain" step="0.1" min="0" placeholder="0"></div>
+        <div><label>Wind (km/h)</label><input type="number" id="env-wind" placeholder="e.g. 15"></div>
+        <div><label>Solution temp (°C)</label><input type="number" id="env-sol-temp" step="0.1" placeholder="optional"></div>
+        <div><label>Date/time</label><input type="datetime-local" id="env-datetime"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="logEnvEntry()" style="margin-top:10px">Log reading</button>
+    </div>
+    <div class="card">
+      <div class="card-title">BOM reference — Charleville</div>
+      <div id="bom-data-display"><div style="color:var(--text3);font-size:12px">Loading...</div></div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3)">Source: Bureau of Meteorology, station 044021 (Charleville Airport). Data may be delayed. Always verify critical readings.</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:0">
+    <div class="card-title">Environment log</div>
+    <div id="env-log-table">
+      <div style="color:var(--text3);font-size:12px;text-align:center;padding:20px">No readings logged yet.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SOURCE WATER -->
+<div class="page" id="page-water">
+  <h1>Source water</h1>
+  <div class="subtitle">Default: Charleville artesian bore water</div>
+  <div class="card">
+    <div class="card-title">Water source preset</div>
+    <div class="row">
+      <select id="water-preset" onchange="loadWaterPreset()" style="width:220px">
+        <option value="charleville">Charleville artesian bore</option>
+        <option value="morven">Morven artesian bore</option>
+        <option value="augathella">Augathella artesian bore</option>
+        <option value="rainwater">Rainwater (clean)</option>
+        <option value="custom">Custom / enter manually</option>
+      </select>
+      <span style="font-size:11px;color:var(--text3)">Select a preset or enter manually below</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Water chemistry (ppm unless noted)</div>
+    <div class="grid6">
+      <div><label>Ca</label><input type="number" id="sw-ca" value="4.0" step="0.1" min="0"></div>
+      <div><label>Mg</label><input type="number" id="sw-mg" value="0.1" step="0.1" min="0"></div>
+      <div><label>K</label><input type="number" id="sw-k" value="2.2" step="0.1" min="0"></div>
+      <div><label>N-NO₃</label><input type="number" id="sw-n" value="0" step="0.1" min="0"></div>
+      <div><label>P</label><input type="number" id="sw-p" value="0" step="0.1" min="0"></div>
+      <div><label>S</label><input type="number" id="sw-s" value="5.3" step="0.1" min="0"></div>
+    </div>
+    <div class="grid6" style="margin-top:8px">
+      <div><label>Na</label><input type="number" id="sw-na" value="110" step="1" min="0"></div>
+      <div><label>Cl</label><input type="number" id="sw-cl" value="51" step="1" min="0"></div>
+      <div><label>Fe</label><input type="number" id="sw-fe" value="0.01" step="0.001" min="0"></div>
+      <div><label>pH</label><input type="number" id="sw-ph" value="8.55" step="0.01" min="0" max="14"></div>
+      <div><label>EC (mS/cm)</label><input type="number" id="sw-ec" value="0.480" step="0.01" min="0"></div>
+      <div><label>Alkalinity (mg/L CaCO₃)</label><input type="number" id="sw-alk" value="153" step="1" min="0"></div>
+    </div>
+    <div id="sw-alerts" style="margin-top:12px"></div>
+    <button class="btn btn-primary btn-sm" onclick="saveSourceWater()" style="margin-top:10px">Save source water</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Water quality notes</div>
+    <textarea id="sw-notes" placeholder="Any notes about this water source — seasonal changes, treatment, test dates..."></textarea>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">If data is unavailable for your source, leave fields at 0 — the solver will proceed without subtraction. Update when lab results are available.</div>
+  </div>
+</div>
+
+<!-- SALT LIBRARY -->
+<div class="page" id="page-salts">
+  <h1>Salt library</h1>
+  <div class="subtitle">Toggle salts on/off · edit compositions · verified = confirmed against web app</div>
+  <div class="card" id="salt-lib-card"></div>
+  <div class="card" style="overflow-x:auto">
+    <div class="card-title">Composition matrix (%)</div>
+    <table id="comp-matrix-table">
+      <thead><tr><th>Substance</th><th class="num">N-NO₃%</th><th class="num">N-NH₄%</th><th class="num">P%</th><th class="num">K%</th><th class="num">Ca%</th><th class="num">Mg%</th><th class="num">S%</th><th class="num">Cl%</th><th>Status</th></tr></thead>
+      <tbody id="comp-matrix-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- DATA / BACKUP -->
+<div class="page" id="page-data">
+  <h1>Data & backup</h1>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Export</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Download all your mixes, grow logs, environment readings and settings as a JSON file.</p>
+      <button class="btn btn-primary" onclick="exportData()">↓ Export all data</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Import / restore</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Restore from a previously exported JSON backup. This will merge with existing data.</p>
+      <input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:none">
+      <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">↑ Import backup</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Storage summary</div>
+      <div id="data-summary"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Reset</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Clear all user data and restore factory defaults. Cannot be undone.</p>
+      <button class="btn btn-danger btn-sm" onclick="resetData()">Reset all data</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main -->
+</div><!-- end app -->
+
+<!-- CLONE MIX MODAL -->
+<div class="modal-overlay" id="clone-modal">
+  <div class="modal">
+    <div class="modal-title">Clone mix</div>
+    <div><label>New mix name</label><input type="text" id="clone-name" placeholder="e.g. My strawberry flowering"></div>
+    <div style="margin-top:10px"><label>Notes</label><input type="text" id="clone-notes"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('clone-modal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="doClone()">Clone</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA MODEL =====
+const DEFAULT_SW = {ca:4.0,mg:0.1,k:2.2,nno3:0,p:0,s:5.3,na:110,cl:51,fe:0.01,ph:8.55,ec:0.480,alk:153,notes:''};
+const WATER_PRESETS = {
+  charleville:{ca:4.0,mg:0.1,k:2.2,nno3:0,p:0,s:5.3,na:110,cl:51,fe:0.01,ph:8.55,ec:0.480,alk:153},
+  morven:{ca:1.1,mg:0.1,k:1.4,nno3:0,p:0,s:0,na:76,cl:11,fe:0.25,ph:8.04,ec:0.300,alk:147},
+  augathella:{ca:2.3,mg:0.1,k:1.0,nno3:0,p:0,s:16,na:190,cl:100,fe:0.01,ph:8.82,ec:0.853,alk:218},
+  rainwater:{ca:0,mg:0,k:0,nno3:0,p:0,s:0,na:2,cl:3,fe:0,ph:6.5,ec:0.02,alk:5},
+  custom:null
+};
+
+const DEFAULT_SALTS = [
+  {id:'cano3',name:'Calcium nitrate',formula:'Ca(NO₃)₂·4H₂O',brand:'Calcinit / NitroCal',nno3:11.74,nnh4:0,p:0,k:0,ca:16.80,mg:0,s:0,cl:0,enabled:true,verified:true},
+  {id:'kno3',name:'Potassium nitrate',formula:'KNO₃',brand:'',nno3:13.71,nnh4:0,p:0,k:38.29,ca:0,mg:0,s:0,cl:0,enabled:true,verified:true},
+  {id:'mkp',name:'Monopotassium phosphate',formula:'KH₂PO₄',brand:'MKP',nno3:0,nnh4:0,p:22.31,k:28.16,ca:0,mg:0,s:0,cl:0,enabled:true,verified:true},
+  {id:'mgso4',name:'Magnesium sulphate',formula:'MgSO₄·7H₂O',brand:'Epsom salts',nno3:0,nnh4:0,p:0,k:0,ca:0,mg:9.76,s:12.88,cl:0,enabled:true,verified:true},
+  {id:'cacl2',name:'Calcium chloride',formula:'CaCl₂·2H₂O',brand:'',nno3:0,nnh4:0,p:0,k:0,ca:18.28,mg:0,s:0,cl:32.36,enabled:false,verified:false},
+  {id:'k2so4',name:'Potassium sulphate',formula:'K₂SO₄',brand:'',nno3:0,nnh4:0,p:0,k:44.87,ca:0,mg:0,s:18.40,cl:0,enabled:false,verified:false},
+  {id:'nh4no3',name:'Ammonium nitrate',formula:'NH₄NO₃',brand:'',nno3:17.50,nnh4:17.50,p:0,k:0,ca:0,mg:0,s:0,cl:0,enabled:false,verified:false},
+  {id:'trace',name:'Trace element mix',formula:'Various',brand:'',nno3:0,nnh4:0,p:0,k:0,ca:0,mg:0,s:0,cl:0,enabled:true,verified:false,isTrace:true},
+];
+
+// Preset crop mixes (targets in ppm)
+const PRESET_MIXES = [
+  {id:'p1',name:'Strawberry — Seedling',crop:'Strawberry',stage:'Seedling / propagation',preset:true,targets:{nno3:80,nnh4:10,p:30,k:150,ca:120,mg:40,s:40,fe:1.5},notes:'Low EC start. Gentle introduction.',ec:1.2},
+  {id:'p2',name:'Strawberry — Vegetative',crop:'Strawberry',stage:'Vegetative growth',preset:true,targets:{nno3:120,nnh4:15,p:40,k:180,ca:150,mg:45,s:55,fe:2},notes:'Build leaf mass. Increase K gradually.',ec:1.6},
+  {id:'p3',name:'Strawberry — Flowering',crop:'Strawberry',stage:'Flowering / fruiting',preset:true,targets:{nno3:130,nnh4:10,p:45,k:220,ca:160,mg:50,s:60,fe:2},notes:'Boost K:N ratio for fruit set.',ec:1.8},
+  {id:'p4',name:'Strawberry — Late/Flush',crop:'Strawberry',stage:'Late fruiting / flush',preset:true,targets:{nno3:100,nnh4:5,p:35,k:200,ca:140,mg:40,s:50,fe:1.5},notes:'Reduce N, maintain K for ripening.',ec:1.6},
+  {id:'p5',name:'Tomato — Seedling',crop:'Tomato',stage:'Seedling / propagation',preset:true,targets:{nno3:90,nnh4:10,p:35,k:160,ca:130,mg:40,s:45,fe:2},notes:'',ec:1.5},
+  {id:'p6',name:'Tomato — Vegetative',crop:'Tomato',stage:'Vegetative growth',preset:true,targets:{nno3:150,nnh4:20,p:50,k:200,ca:170,mg:50,s:65,fe:2.5},notes:'High N period. Watch Ca closely.',ec:2.0},
+  {id:'p7',name:'Tomato — Flowering',crop:'Tomato',stage:'Flowering / fruiting',preset:true,targets:{nno3:160,nnh4:15,p:55,k:250,ca:180,mg:55,s:70,fe:2.5},notes:'Increase K for fruit development.',ec:2.5},
+  {id:'p8',name:'Tomato — Late/Flush',crop:'Tomato',stage:'Late fruiting / flush',preset:true,targets:{nno3:120,nnh4:10,p:40,k:230,ca:160,mg:45,s:60,fe:2},notes:'',ec:2.2},
+  {id:'p9',name:'Lettuce — Seedling',crop:'Lettuce / leafy greens',stage:'Seedling / propagation',preset:true,targets:{nno3:70,nnh4:10,p:25,k:120,ca:100,mg:30,s:35,fe:1.5},notes:'Very low EC. Lettuce is sensitive.',ec:0.8},
+  {id:'p10',name:'Lettuce — Vegetative',crop:'Lettuce / leafy greens',stage:'Vegetative growth',preset:true,targets:{nno3:120,nnh4:15,p:35,k:160,ca:140,mg:40,s:45,fe:2},notes:'Main growth phase.',ec:1.4},
+  {id:'p11',name:'Cucumber — Seedling',crop:'Cucumber',stage:'Seedling / propagation',preset:true,targets:{nno3:90,nnh4:10,p:35,k:160,ca:130,mg:40,s:45,fe:1.5},notes:'',ec:1.4},
+  {id:'p12',name:'Cucumber — Vegetative',crop:'Cucumber',stage:'Vegetative growth',preset:true,targets:{nno3:150,nnh4:15,p:50,k:200,ca:160,mg:50,s:60,fe:2},notes:'',ec:2.0},
+  {id:'p13',name:'Cucumber — Flowering',crop:'Cucumber',stage:'Flowering / fruiting',preset:true,targets:{nno3:160,nnh4:10,p:55,k:240,ca:170,mg:55,s:65,fe:2.5},notes:'',ec:2.5},
+  {id:'p14',name:'Cucumber — Late/Flush',crop:'Cucumber',stage:'Late fruiting / flush',preset:true,targets:{nno3:120,nnh4:5,p:40,k:220,ca:150,mg:45,s:55,fe:2},notes:'',ec:2.0},
+  {id:'p15',name:'Capsicum — Vegetative',crop:'Capsicum / pepper',stage:'Vegetative growth',preset:true,targets:{nno3:140,nnh4:15,p:45,k:190,ca:160,mg:50,s:60,fe:2},notes:'',ec:1.8},
+  {id:'p16',name:'Capsicum — Flowering',crop:'Capsicum / pepper',stage:'Flowering / fruiting',preset:true,targets:{nno3:155,nnh4:10,p:55,k:240,ca:175,mg:55,s:65,fe:2.5},notes:'',ec:2.4},
+  {id:'p17',name:'Herbs — Vegetative',crop:'Herbs',stage:'Vegetative growth',preset:true,targets:{nno3:110,nnh4:15,p:35,k:150,ca:130,mg:40,s:45,fe:1.5},notes:'Most herbs prefer moderate EC.',ec:1.2},
+  {id:'p18',name:'Herbs — Flowering',crop:'Herbs',stage:'Flowering / fruiting',preset:true,targets:{nno3:100,nnh4:10,p:40,k:160,ca:120,mg:40,s:50,fe:1.5},notes:'',ec:1.3},
+];
+
+// ===== STATE =====
+let DB = {
+  sourceWater: {...DEFAULT_SW},
+  salts: JSON.parse(JSON.stringify(DEFAULT_SALTS)),
+  mixes: [],
+  grows: [],
+  envLog: [],
+  lastCalc: null,
+  currentModalMixId: null,
+  currentGrowId: null,
+};
+
+function loadDB(){
+  try{
+    const s=localStorage.getItem('hydromanager_db');
+    if(s){const p=JSON.parse(s);DB={...DB,...p};
+      // ensure salts always present
+      if(!DB.salts||DB.salts.length===0) DB.salts=JSON.parse(JSON.stringify(DEFAULT_SALTS));
+    }
+  }catch(e){}
+}
+function saveDB(){localStorage.setItem('hydromanager_db',JSON.stringify(DB));}
+function allMixes(){return [...PRESET_MIXES,...DB.mixes];}
+
+// ===== NAVIGATION =====
+function nav(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const items=document.querySelectorAll('.nav-item');
+  items.forEach(i=>{if(i.getAttribute('onclick')&&i.getAttribute('onclick').includes("'"+page+"'"))i.classList.add('active');});
+  if(page==='dashboard')renderDashboard();
+  if(page==='mixes')renderMixes();
+  if(page==='log')renderLog();
+  if(page==='salts')renderSalts();
+  if(page==='calculator')renderCalcPage();
+  if(page==='data')renderDataSummary();
+  if(page==='environment')renderEnvPage();
+}
+
+// ===== TABS =====
+function calcTab(id,el){
+  document.querySelectorAll('#page-calculator .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#page-calculator .tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('ct-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ===== CLOCK =====
+function updateClock(){document.getElementById('tb-time').textContent=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});}
+setInterval(updateClock,1000);updateClock();
+
+// ===== SOURCE WATER =====
+const SW_PRESETS_DATA = WATER_PRESETS;
+function loadWaterPreset(){
+  const v=document.getElementById('water-preset').value;
+  const p=SW_PRESETS_DATA[v];
+  if(!p)return;
+  Object.entries(p).forEach(([k,val])=>{const el=document.getElementById('sw-'+k);if(el)el.value=val;});
+  checkSwAlerts();
+}
+function saveSourceWater(){
+  DB.sourceWater={
+    ca:+document.getElementById('sw-ca').value||0,
+    mg:+document.getElementById('sw-mg').value||0,
+    k:+document.getElementById('sw-k').value||0,
+    nno3:+document.getElementById('sw-n').value||0,
+    p:+document.getElementById('sw-p').value||0,
+    s:+document.getElementById('sw-s').value||0,
+    na:+document.getElementById('sw-na').value||0,
+    cl:+document.getElementById('sw-cl').value||0,
+    fe:+document.getElementById('sw-fe').value||0,
+    ph:+document.getElementById('sw-ph').value||7,
+    ec:+document.getElementById('sw-ec').value||0,
+    alk:+document.getElementById('sw-alk').value||0,
+    notes:document.getElementById('sw-notes').value||'',
+  };
+  saveDB();
+  checkSwAlerts();
+  const el=document.getElementById('sw-alerts');
+  el.innerHTML='<div class="alert alert-ok">Source water saved. Solver will subtract these values from targets.</div>'+el.innerHTML.replace(/<div class="alert alert-ok">.*?<\/div>/,'');
+}
+function checkSwAlerts(){
+  const na=+document.getElementById('sw-na').value||0;
+  const cl=+document.getElementById('sw-cl').value||0;
+  const alk=+document.getElementById('sw-alk').value||0;
+  const fe=+document.getElementById('sw-fe').value||0;
+  let html='';
+  if(na>180)html+=`<div class="alert alert-warn">⚠ Na (${na} ppm) exceeds ADWG guideline of 180 ppm. Consider blending with rainwater.</div>`;
+  else if(na>100)html+=`<div class="alert alert-warn">Na (${na} ppm) is moderate. Monitor accumulation in recirculating systems.</div>`;
+  if(cl>100)html+=`<div class="alert alert-warn">⚠ Cl (${cl} ppm) may stress sensitive crops above 100 ppm.</div>`;
+  if(alk>150)html+=`<div class="alert alert-warn">⚠ High alkalinity (${alk} mg/L CaCO₃ ≈ ${(alk*1.22).toFixed(0)} mg/L HCO₃). Acid correction required before use. See pH/Acid tab in calculator.</div>`;
+  if(fe>0.2)html+=`<div class="alert alert-warn">Fe (${fe} mg/L) is elevated. May precipitate and block drip emitters at high pH. Filter or acidify.</div>`;
+  document.getElementById('sw-alerts').innerHTML=html;
+}
+document.addEventListener('input',e=>{
+  if(['sw-na','sw-cl','sw-alk','sw-fe'].includes(e.target.id))checkSwAlerts();
+});
+
+// ===== SALTS =====
+const NUTR_KEYS=['nno3','nnh4','p','k','ca','mg','s','cl'];
+function renderSalts(){
+  const card=document.getElementById('salt-lib-card');
+  card.innerHTML='<div class="card-title">Single salt library</div>'+
+    DB.salts.map((s,i)=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border2)">
+        <input type="checkbox" ${s.enabled?'checked':''} onchange="DB.salts[${i}].enabled=this.checked;saveDB();renderSalts()">
+        <span style="flex:1;font-size:12px">${s.name} <span style="color:var(--text3);font-size:11px">${s.formula}</span>${s.brand?` <span style="color:var(--text3);font-size:10px">/ ${s.brand}</span>`:''}</span>
+        <span class="tag ${s.verified?'tag-green':'tag-amber'}">${s.verified?'verified':'unverified'}</span>
+        ${s.isTrace?'<span class="tag tag-teal">trace mix</span>':''}
+      </div>`).join('');
+
+  const tbody=document.getElementById('comp-matrix-body');
+  tbody.innerHTML=DB.salts.map((s,si)=>`
+    <tr style="opacity:${s.enabled?1:0.4}">
+      <td>${s.name}</td>
+      ${NUTR_KEYS.map(n=>`<td class="num"><input type="number" value="${s[n]||0}" step="0.01" style="width:54px;font-size:11px;padding:2px 5px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:3px;text-align:right" onchange="DB.salts[${si}]['${n}']=+this.value;saveDB()"></td>`).join('')}
+      <td><span class="tag ${s.verified?'tag-green':'tag-amber'}">${s.verified?'verified':'unverified'}</span></td>
+    </tr>`).join('');
+}
+
+// ===== EC / pH CONSTANTS =====
+const EC_FACTORS={cano3:1.06,kno3:1.27,mkp:0.73,mgso4:0.44,cacl2:1.72,k2so4:0.72,nh4no3:1.26,kcl:1.84,trace:0.05};
+const PH_RANGES={Strawberry:[5.5,6.2],Tomato:[5.8,6.3],'Lettuce / leafy greens':[6.0,7.0],Cucumber:[5.5,6.0],'Capsicum / pepper':[5.8,6.3],Herbs:[5.5,6.5],default:[5.5,6.5]};
+const EC_RANGES={'Seedling / propagation':[0.8,1.4],'Vegetative growth':[1.4,2.2],'Flowering / fruiting':[2.0,3.0],'Late fruiting / flush':[1.6,2.4],default:[1.5,2.5]};
+
+function calcTheoreticalEC(amounts, activeSalts, vol){
+  // EC contribution: (g/L) * EC_factor per salt; add source water EC
+  let ec = DB.sourceWater.ec || 0;
+  activeSalts.forEach((s,i)=>{
+    const gPerL = amounts[i] / vol;
+    ec += gPerL * (EC_FACTORS[s.id] || 0.5);
+  });
+  return ec;
+}
+
+function getECpHAlerts(measuredEC, measuredPH, targetPH, crop, stage){
+  const phRange = PH_RANGES[crop] || PH_RANGES.default;
+  const ecRange = EC_RANGES[stage] || EC_RANGES.default;
+  const alerts = [];
+
+  if(measuredPH !== null){
+    if(measuredPH > phRange[1] + 0.2)
+      alerts.push({type:'warn', text:`pH ${measuredPH} is HIGH for ${crop||'this crop'} (target ${phRange[0]}–${phRange[1]}). Add pH down (phosphoric acid) drop by drop, retest after each addition.`});
+    else if(measuredPH < phRange[0] - 0.2)
+      alerts.push({type:'warn', text:`pH ${measuredPH} is LOW for ${crop||'this crop'} (target ${phRange[0]}–${phRange[1]}). Add pH up (potassium silicate or dilute KOH) slowly and retest.`});
+    else
+      alerts.push({type:'ok', text:`pH ${measuredPH} is within target range ${phRange[0]}–${phRange[1]} ✓`});
+  }
+
+  if(measuredEC !== null){
+    if(measuredEC > ecRange[1] + 0.3){
+      const pctDilute = Math.round((measuredEC - ecRange[1]) / measuredEC * 100);
+      alerts.push({type:'warn', text:`EC ${measuredEC} mS/cm is HIGH (target ${ecRange[0]}–${ecRange[1]}). Dilute with ~${pctDilute}% fresh water. For ${vol||100}L reservoir, remove ~${Math.round(vol*(pctDilute/100))}L and replace with plain water.`});
+    } else if(measuredEC < ecRange[0] - 0.2)
+      alerts.push({type:'info', text:`EC ${measuredEC} mS/cm is LOW (target ${ecRange[0]}–${ecRange[1]}). Top up with nutrient solution at standard concentration.`});
+    else
+      alerts.push({type:'ok', text:`EC ${measuredEC} mS/cm is within target range ${ecRange[0]}–${ecRange[1]} ✓`});
+  }
+  return alerts;
+}
+
+// ===== SOLVER =====
+function ppm(g,vol,pct){return g*(pct/100)*(1000/vol);}
+
+// Empirically-justified nutrient weights for weighted least-squares solver.
+// Ca 3.0 — immobile, BER/tip burn, low uptake efficiency (4-6%)
+// K  2.5 — fruit quality, K:Ca antagonism blocks Ca/Mg uptake
+// Mg 2.0 — chlorophyll centre, inhibited by excess K+/Ca2+ in closed systems
+// NH4 2.0 — narrow safe range, excess causes root toxicity + pH crash
+// N  1.5 — wide tolerance range, fast uptake self-corrects
+// P  1.0 — broadest working range, over-dose precipitates with Ca
+// S  1.0 — semi-mobile, wide tolerance, accumulates in recirculating systems
+const NUTR_WEIGHTS = {nno3:1.5, nnh4:2.0, p:1.0, k:2.5, ca:3.0, mg:2.0, s:1.0};
+
+// ---- Matrix math helpers (no external libraries needed) ----
+function matMul(A,B){
+  // A: m×n, B: n×p → m×p
+  const m=A.length,n=B.length,p=B[0].length;
+  return Array.from({length:m},(_,i)=>Array.from({length:p},(_,j)=>
+    A[i].reduce((s,_,k)=>s+A[i][k]*B[k][j],0)));
+}
+function matVec(A,x){return A.map(row=>row.reduce((s,v,j)=>s+v*x[j],0));}
+function transpose(A){return A[0].map((_,j)=>A.map(row=>row[j]));}
+
+// Cholesky solve for symmetric positive-definite Ax=b
+function choleskySolve(A,b){
+  const n=A.length;
+  // Copy A
+  const L=Array.from({length:n},(_,i)=>Array(n).fill(0));
+  for(let i=0;i<n;i++){
+    for(let j=0;j<=i;j++){
+      let s=A[i][j];
+      for(let k=0;k<j;k++) s-=L[i][k]*L[j][k];
+      L[i][j]=j===i?Math.sqrt(Math.max(s,1e-14)):s/L[j][j];
+    }
+  }
+  // Forward substitution Ly=b
+  const y=Array(n).fill(0);
+  for(let i=0;i<n;i++){
+    let s=b[i];
+    for(let k=0;k<i;k++) s-=L[i][k]*y[k];
+    y[i]=s/L[i][i];
+  }
+  // Back substitution L^T x=y
+  const x=Array(n).fill(0);
+  for(let i=n-1;i>=0;i--){
+    let s=y[i];
+    for(let k=i+1;k<n;k++) s-=L[k][i]*x[k];
+    x[i]=s/L[i][i];
+  }
+  return x;
+}
+
+function runSolver(){
+  const vol=+document.getElementById('c-vol').value||100;
+  const sw=DB.sourceWater;
+  const rawTgt={
+    nno3:+document.getElementById('tN').value||0,
+    nnh4:+document.getElementById('tNH4').value||0,
+    p:+document.getElementById('tP').value||0,
+    k:+document.getElementById('tK').value||0,
+    ca:+document.getElementById('tCa').value||0,
+    mg:+document.getElementById('tMg').value||0,
+    s:+document.getElementById('tS').value||0,
+  };
+
+  // Subtract source water contributions (ppm is volume-independent)
+  const adjTgt={};
+  ['nno3','nnh4','p','k','ca','mg','s'].forEach(n=>
+    adjTgt[n]=Math.max(0,(rawTgt[n]||0)-(sw[n]||0)));
+
+  const activeSalts=DB.salts.filter(s=>s.enabled&&!s.isTrace);
+  const ns=activeSalts.length;
+  const nutrients=['nno3','nnh4','p','k','ca','mg','s'];
+
+  // Build A matrix: A[i][j] = ppm contributed by 1 g/L of salt j for nutrient i
+  // ppm per g/L = (pct/100) * 1000 = pct * 10 — completely volume-independent
+  const A=nutrients.map(n=>activeSalts.map(s=>(s[n]||0)*10));
+  const b=nutrients.map(n=>adjTgt[n]||0);
+  const W=nutrients.map(n=>NUTR_WEIGHTS[n]||1.0);
+
+  // Weighted least-squares: min Σ w²(Ax-b)²  s.t. x≥0
+  // Normal equations: (A^T W^T W A) x = A^T W^T W b
+  // where W is diagonal weight matrix
+  const WA=A.map((row,i)=>row.map(v=>W[i]*v));
+  const Wb=b.map((v,i)=>W[i]*v);
+  const AtWtWA=matMul(transpose(WA),WA);
+  const AtWtWb=matVec(transpose(WA),Wb);
+
+  // Solve normal equations
+  let concGL=choleskySolve(AtWtWA,AtWtWb);
+
+  // Non-negative projection + one refinement pass (active set)
+  // If any variable went negative, zero it and re-solve with reduced system
+  let negIdx=concGL.map((v,i)=>v<0?i:-1).filter(i=>i>=0);
+  if(negIdx.length>0){
+    const keep=activeSalts.map((_,i)=>!negIdx.includes(i));
+    const A2=A.map(row=>row.filter((_,j)=>keep[j]));
+    const WA2=A2.map((row,i)=>row.map(v=>W[i]*v));
+    const AtWtWA2=matMul(transpose(WA2),WA2);
+    const AtWtWb2=matVec(transpose(WA2),Wb);
+    const x2=choleskySolve(AtWtWA2,AtWtWb2);
+    let j2=0;
+    concGL=activeSalts.map((_,i)=>keep[i]?Math.max(0,x2[j2++]):0);
+  } else {
+    concGL=concGL.map(v=>Math.max(0,v));
+  }
+
+  // Convert g/L → grams for this volume
+  const amounts=concGL.map(c=>c*vol);
+
+  // Compute results
+  const results={};
+  ['nno3','nnh4','p','k','ca','mg','s'].forEach(n=>{
+    const fromFerts=activeSalts.reduce((sum,s,i)=>sum+ppm(amounts[i],vol,s[n]),0);
+    const fromWater=sw[n]||0;
+    results[n]={target:rawTgt[n]||0,fromWater,fromFerts,total:fromWater+fromFerts};
+  });
+
+  const theoreticalEC = calcTheoreticalEC(amounts, activeSalts, vol);
+  DB.lastCalc={vol,amounts,activeSalts:activeSalts.map(s=>({...s})),results,rawTgt,sw:{...sw},theoreticalEC};
+  saveDB();
+  renderResults();
+  calcTab('results',document.querySelectorAll('#page-calculator .tab-btn')[1]);
+}
+
+function renderResults(){
+  const lc=DB.lastCalc;
+  if(!lc){document.getElementById('calc-results-content').innerHTML='<div style="color:var(--text3);text-align:center;padding:40px">Run the solver first →</div>';return;}
+  const {vol,amounts,activeSalts,results}=lc;
+  const NLABELS={nno3:'N-NO₃',nnh4:'N-NH₄',p:'P',k:'K',ca:'Ca',mg:'Mg',s:'S'};
+  const WEIGHT_LABELS={
+    nno3:{stars:'★★☆☆',label:'moderate',color:'var(--text2)'},
+    nnh4:{stars:'★★★☆',label:'high',color:'var(--amber)'},
+    p:   {stars:'★☆☆☆',label:'low',color:'var(--text3)'},
+    k:   {stars:'★★★☆',label:'high',color:'var(--amber)'},
+    ca:  {stars:'★★★★',label:'critical',color:'var(--green)'},
+    mg:  {stars:'★★★☆',label:'high',color:'var(--amber)'},
+    s:   {stars:'★☆☆☆',label:'low',color:'var(--text3)'},
+  };
+
+  let saltHtml=`<div class="grid4" style="margin-bottom:14px">`;
+  activeSalts.forEach((s,i)=>{
+    if(amounts[i]<0.01)return;
+    saltHtml+=`<div class="metric"><div class="lbl">${s.formula}</div><div class="val">${amounts[i].toFixed(2)}</div><div class="unit">g per ${vol}L</div></div>`;
+  });
+  saltHtml+=`</div>`;
+
+  let tableHtml=`<div class="card"><table>
+    <thead><tr>
+      <th>Nutrient</th>
+      <th>Priority</th>
+      <th class="num">Target</th>
+      <th class="num">From water</th>
+      <th class="num">From ferts</th>
+      <th class="num">Total</th>
+      <th class="num">Error</th>
+      <th class="num">Error %</th>
+      <th>Status</th>
+    </tr></thead><tbody>`;
+
+  let sse=0, wsse=0;
+  Object.entries(results).forEach(([n,r])=>{
+    const err=r.total-r.target;
+    const w=NUTR_WEIGHTS[n]||1.0;
+    sse+=err*err;
+    wsse+=w*w*err*err;
+    const pctE=r.target>0?(err/r.target*100):0;
+    const cls=Math.abs(pctE)<3?'result-good':err>0?'result-over':'result-under';
+    const tag=Math.abs(pctE)<3
+      ?'<span class="tag tag-green">✓ exact</span>'
+      :err>0
+        ?`<span class="tag tag-amber">+${pctE.toFixed(1)}%</span>`
+        :`<span class="tag tag-blue">${pctE.toFixed(1)}%</span>`;
+    const wl=WEIGHT_LABELS[n]||{stars:'★☆☆☆',label:'low',color:'var(--text3)'};
+    // Bar showing how much of the error budget this nutrient "costs"
+    tableHtml+=`<tr>
+      <td style="font-weight:500">${NLABELS[n]}</td>
+      <td><span style="font-size:11px;color:${wl.color};letter-spacing:1px" title="Solver weight: ${w}x">${wl.stars}</span><span style="font-size:10px;color:var(--text3);margin-left:4px">${wl.label}</span></td>
+      <td class="num">${r.target.toFixed(0)}</td>
+      <td class="num" style="color:var(--text3)">${r.fromWater>0.01?r.fromWater.toFixed(1):'—'}</td>
+      <td class="num">${r.fromFerts.toFixed(1)}</td>
+      <td class="num ${cls}">${r.total.toFixed(1)}</td>
+      <td class="num ${cls}">${err>0?'+':''}${err.toFixed(1)}</td>
+      <td class="num ${cls}">${r.target>0?(err>0?'+':'')+pctE.toFixed(1)+'%':'—'}</td>
+      <td>${tag}</td>
+    </tr>`;
+  });
+  tableHtml+=`</tbody></table>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.8">
+      <strong style="color:var(--text2)">Priority guide:</strong>
+      ★★★★ critical (Ca) — solver penalises errors 9× harder than low-priority ·
+      ★★★☆ high (K, Mg, NH₄) — 6.25× ·
+      ★★☆☆ moderate (N-NO₃) — 2.25× ·
+      ★☆☆☆ low (P, S) — 1× baseline.<br>
+      When a perfect solution is impossible, the solver sacrifices P and S accuracy to protect Ca, K and Mg.
+    </div>
+  </div>`;
+
+  // Weighted RMSE — a better metric than plain RMSE for this solver
+  const wrmse=Math.sqrt(wsse/7);
+  const rmse=Math.sqrt(sse/7);
+  const tEC = lc.theoreticalEC || 0;
+
+  const ecPhPanel=`<div class="card" style="margin-bottom:10px">
+    <div class="card-title">EC & pH — theoretical vs measured</div>
+    <div class="grid4" style="margin-bottom:12px">
+      <div class="metric"><div class="lbl">Theoretical EC</div><div class="val">${tEC.toFixed(2)}</div><div class="unit">mS/cm (estimated)</div></div>
+      <div class="metric"><div class="lbl">Target pH</div><div class="val">${+document.getElementById('t-ph').value||5.8}</div><div class="unit">set in setup</div></div>
+      <div class="metric"><div class="lbl">Measured EC</div><div class="val" id="res-mec-display">—</div><div class="unit">enter below</div></div>
+      <div class="metric"><div class="lbl">Measured pH</div><div class="val" id="res-mph-display">—</div><div class="unit">enter below</div></div>
+    </div>
+    <div class="grid3" style="margin-bottom:10px">
+      <div><label>Measured EC (mS/cm)</label><input type="number" id="res-mec" step="0.01" min="0" placeholder="e.g. 2.1" oninput="updateMeasuredReadings()"></div>
+      <div><label>Measured pH</label><input type="number" id="res-mph" step="0.01" min="0" max="14" placeholder="e.g. 6.0" oninput="updateMeasuredReadings()"></div>
+      <div><label>Crop (for range check)</label>
+        <select id="res-crop" onchange="updateMeasuredReadings()">
+          <option value="">— select crop —</option>
+          <option>Strawberry</option><option>Tomato</option><option>Lettuce / leafy greens</option>
+          <option>Cucumber</option><option>Capsicum / pepper</option><option>Herbs</option>
+        </select>
+      </div>
+    </div>
+    <div id="ec-ph-alerts"></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">Theoretical EC is an estimate based on salt concentrations. Always verify with a calibrated meter.</div>
+  </div>`;
+
+  const diagHtml=`<div class="card" style="font-size:12px;color:var(--text2);line-height:2">
+    <strong>Active salts:</strong> ${activeSalts.filter((s,i)=>amounts[i]>0.01).length} &nbsp;·&nbsp;
+    <strong>Unweighted RMSE:</strong> ${rmse.toFixed(2)} ppm &nbsp;·&nbsp;
+    <strong>Weighted RMSE:</strong> ${wrmse.toFixed(2)}<br>
+    <strong>Solver:</strong> weighted least-squares · Ca×9 · K×6.25 · Mg×4 · N-NO₃×2.25 · P×1 · S×1<br>
+    <span style="color:var(--text3)">Charleville source water subtraction active · weights based on peer-reviewed hydroponic nutrition research.</span>
+  </div>`;
+
+  document.getElementById('calc-results-content').innerHTML=saltHtml+ecPhPanel+tableHtml+diagHtml;
+  // Populate save-name suggestion
+  document.getElementById('save-name').value='';
+}
+
+function updateMeasuredReadings(){
+  const mec = document.getElementById('res-mec') ? +document.getElementById('res-mec').value || null : null;
+  const mph = document.getElementById('res-mph') ? +document.getElementById('res-mph').value || null : null;
+  const crop = document.getElementById('res-crop') ? document.getElementById('res-crop').value : '';
+  const stage = DB.lastCalc ? (DB.lastCalc.rawTgt._stage||'') : '';
+  const vol = DB.lastCalc ? DB.lastCalc.vol : 100;
+  const tEC = DB.lastCalc ? (DB.lastCalc.theoreticalEC||0) : 0;
+
+  if(document.getElementById('res-mec-display')) document.getElementById('res-mec-display').textContent = mec||'—';
+  if(document.getElementById('res-mph-display')) document.getElementById('res-mph-display').textContent = mph||'—';
+
+  const alerts = getECpHAlerts(mec, mph, null, crop, stage);
+
+  // Compare measured vs theoretical EC
+  if(mec && tEC > 0){
+    const diff = Math.abs(mec - tEC);
+    if(diff > 0.5)
+      alerts.push({type:'info', text:`Measured EC (${mec}) differs from theoretical (${tEC.toFixed(2)}) by ${diff.toFixed(2)} mS/cm. Check salt weights and meter calibration.`});
+    else
+      alerts.push({type:'ok', text:`Measured EC (${mec}) matches theoretical (${tEC.toFixed(2)}) — within 0.5 mS/cm ✓`});
+  }
+
+  const el = document.getElementById('ec-ph-alerts');
+  if(el) el.innerHTML = alerts.map(a=>`<div class="alert ${a.type==='warn'?'alert-warn':a.type==='ok'?'alert-ok':'alert-info'}" style="margin-bottom:6px">${a.text}</div>`).join('');
+}
+
+function renderCalcPage(){
+  // Update source water summary
+  const sw=DB.sourceWater;
+  const active=['ca','mg','k','nno3','p','s'].filter(n=>sw[n]>0.05);
+  document.getElementById('calc-sw-summary').innerHTML=active.length>0
+    ?`<div class="alert alert-ok" style="font-size:11px">Active: ${active.map(n=>n.toUpperCase()+' '+sw[n]).join(' · ')} ppm</div>`
+    :`<div class="alert alert-info" style="font-size:11px">Charleville default loaded. Go to Source Water to edit.</div>`;
+
+  // Salt toggles
+  document.getElementById('salt-toggles').innerHTML=DB.salts.map((s,i)=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border2);cursor:pointer;font-size:12px;color:var(--text2)">
+      <input type="checkbox" ${s.enabled?'checked':''} onchange="DB.salts[${i}].enabled=this.checked;saveDB()">
+      <span style="flex:1">${s.name}</span>
+      <span style="color:var(--text3);font-size:11px">${s.formula}</span>
+      ${s.isTrace?'<span class="tag tag-teal tag-sm">trace</span>':''}
+    </label>`).join('');
+
+  // Load mix dropdown
+  const sel=document.getElementById('c-load-mix');
+  sel.innerHTML='<option value="">— load from mix —</option>'+allMixes().map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+
+  // If last calc, render results
+  if(DB.lastCalc)renderResults();
+}
+
+function loadMixToCalc(){
+  const id=document.getElementById('c-load-mix').value;
+  if(!id)return;
+  const mix=allMixes().find(m=>m.id===id);
+  if(!mix||!mix.targets)return;
+  const t=mix.targets;
+  ['nno3','nnh4','p','k','ca','mg','s'].forEach(n=>{
+    const map={nno3:'tN',nnh4:'tNH4',p:'tP',k:'tK',ca:'tCa',mg:'tMg',s:'tS'};
+    if(map[n]&&t[n]!==undefined)document.getElementById(map[n]).value=t[n];
+  });
+  document.getElementById('save-name').value=mix.name+' (copy)';
+  document.getElementById('save-crop').value=mix.crop||'Other';
+  document.getElementById('save-stage').value=mix.stage||'Vegetative growth';
+}
+
+function saveCurrentMix(){
+  const name=document.getElementById('save-name').value.trim();
+  if(!name){document.getElementById('save-feedback').innerHTML='<span style="color:var(--red);font-size:12px">Please enter a mix name.</span>';return;}
+  if(!DB.lastCalc){document.getElementById('save-feedback').innerHTML='<span style="color:var(--red);font-size:12px">Run the solver first.</span>';return;}
+  const mix={
+    id:'u'+Date.now(),
+    name,
+    crop:document.getElementById('save-crop').value,
+    stage:document.getElementById('save-stage').value,
+    notes:document.getElementById('save-notes').value,
+    preset:false,
+    targets:{...DB.lastCalc.rawTgt},
+    amounts:DB.lastCalc.amounts,
+    saltIds:DB.lastCalc.activeSalts.map(s=>s.id),
+    vol:DB.lastCalc.vol,
+    created:new Date().toISOString(),
+  };
+  DB.mixes.push(mix);
+  saveDB();
+  document.getElementById('save-feedback').innerHTML='<span style="color:var(--green);font-size:12px">✓ Mix saved to library.</span>';
+}
+
+// ===== ACID CALC =====
+const ACID_DATA={
+  h3po4:{name:'Phosphoric acid (H₃PO₄ 75%)',mw:98,purity:0.75,density:1.57,nutrient:'P',pctNutr:31.6,meqPerMl:12},
+  hno3:{name:'Nitric acid (HNO₃ 68%)',mw:63,purity:0.68,density:1.41,nutrient:'N-NO₃',pctNutr:22.0,meqPerMl:15.2},
+  h2so4:{name:'Sulphuric acid (H₂SO₄ 98%)',mw:98,purity:0.98,density:1.84,nutrient:'S',pctNutr:32.7,meqPerMl:18.4},
+  citric:{name:'Citric acid (anhydrous)',mw:192,purity:1.0,density:1.54,nutrient:'None',pctNutr:0,meqPerMl:15.6},
+};
+function calcAcid(){
+  const alkIn=+document.getElementById('acid-alk').value||153;
+  const alkTgt=+document.getElementById('acid-alk-target').value||30;
+  const acidType=document.getElementById('acid-type').value;
+  const vol=+document.getElementById('c-vol').value||100;
+  const acid=ACID_DATA[acidType];
+  // meq to neutralise = (alkIn - alkTgt) / 50 * vol_L
+  const meqToNeutralise=(alkIn-alkTgt)/50*vol;
+  const mlAcid=meqToNeutralise/acid.meqPerMl;
+  const gAcid=mlAcid*acid.density;
+  const nutrAdded=acid.pctNutr>0?(gAcid*acid.pctNutr/100/vol*1000).toFixed(1):null;
+
+  document.getElementById('acid-result').innerHTML=`
+    <div class="alert alert-ok">
+      <strong>Acid dose: ${mlAcid.toFixed(1)} mL</strong> ${acid.name} per ${vol}L<br>
+      Mass equivalent: <strong>${gAcid.toFixed(1)} g</strong><br>
+      HCO₃ reduction: ${alkIn} → ${alkTgt} mg/L as CaCO₃<br>
+      ${nutrAdded?`Nutrient contribution: <strong>${nutrAdded} ppm ${acid.nutrient}</strong> added to solution — account for this in your targets.`:'No direct nutrient contribution.'}
+    </div>
+    <div class="alert alert-warn">Always add acid to water, never water to acid. Add slowly while stirring. Re-check pH after mixing. Wear appropriate PPE.</div>
+  `;
+}
+
+// ===== MIX LIBRARY =====
+const CROP_COLORS={Strawberry:'tag-red',Tomato:'tag-amber','Lettuce / leafy greens':'tag-green',Cucumber:'tag-teal','Capsicum / pepper':'tag-amber',Herbs:'tag-green',Other:'tag-dim'};
+const STAGE_ABBR={'Seedling / propagation':'Seed','Vegetative growth':'Veg','Flowering / fruiting':'Flower','Late fruiting / flush':'Flush'};
+
+function renderMixes(){
+  const cropF=document.getElementById('mix-filter-crop').value;
+  const stageF=document.getElementById('mix-filter-stage').value;
+  let mixes=allMixes();
+  if(cropF)mixes=mixes.filter(m=>m.crop===cropF);
+  if(stageF)mixes=mixes.filter(m=>m.stage===stageF);
+
+  document.getElementById('mix-grid').innerHTML=mixes.map(m=>`
+    <div class="mix-card ${m.preset?'':'user-mix'}" onclick="openMixModal('${m.id}')">
+      ${m.preset?'<div class="mix-preset-badge">preset</div>':''}
+      <div class="mix-card-name">${m.name}</div>
+      <div class="mix-card-crop">${m.crop||''} · ${m.stage||''}</div>
+      <div class="mix-card-tags">
+        <span class="tag ${CROP_COLORS[m.crop]||'tag-dim'}">${m.crop||'?'}</span>
+        <span class="tag tag-dim">${STAGE_ABBR[m.stage]||m.stage||''}</span>
+        ${m.targets&&m.targets.nno3?`<span class="tag tag-blue">N ${m.targets.nno3}</span>`:''}
+        ${m.targets&&m.targets.k?`<span class="tag tag-teal">K ${m.targets.k}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function openMixModal(id){
+  const mix=allMixes().find(m=>m.id===id);
+  if(!mix)return;
+  DB.currentModalMixId=id;
+  const t=mix.targets||{};
+  const NLABELS={nno3:'N-NO₃',nnh4:'N-NH₄',p:'P',k:'K',ca:'Ca',mg:'Mg',s:'S',fe:'Fe'};
+  document.getElementById('mix-modal-content').innerHTML=`
+    <div class="modal-title">${mix.name}</div>
+    <div style="margin-bottom:12px">
+      <span class="tag ${CROP_COLORS[mix.crop]||'tag-dim'}">${mix.crop||'—'}</span>
+      <span class="tag tag-dim" style="margin-left:4px">${mix.stage||'—'}</span>
+      ${mix.preset?'<span class="tag tag-dim" style="margin-left:4px">preset</span>':''}
+    </div>
+    ${mix.notes?`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">${mix.notes}</div>`:''}
+    <div class="grid4" style="margin-bottom:12px">
+      ${Object.entries(t).map(([n,v])=>`<div class="metric"><div class="lbl">${NLABELS[n]||n}</div><div class="val" style="font-size:17px">${v}</div><div class="unit">ppm</div></div>`).join('')}
+    </div>
+    ${mix.created?`<div style="font-size:11px;color:var(--text3)">Created: ${new Date(mix.created).toLocaleDateString('en-AU')}</div>`:''}
+  `;
+  document.getElementById('mix-modal').classList.add('open');
+}
+function closeMixModal(){document.getElementById('mix-modal').classList.remove('open');}
+
+function loadMixToCalcFromModal(){
+  document.getElementById('c-load-mix').value=DB.currentModalMixId;
+  loadMixToCalc();
+  closeMixModal();
+  nav('calculator');
+}
+
+function startGrowFromModal(){
+  closeMixModal();
+  openNewGrow(DB.currentModalMixId);
+}
+
+function cloneMix(){
+  const mix=allMixes().find(m=>m.id===DB.currentModalMixId);
+  if(!mix)return;
+  document.getElementById('clone-name').value=mix.name+' (copy)';
+  document.getElementById('clone-notes').value=mix.notes||'';
+  document.getElementById('clone-modal').classList.add('open');
+  document.getElementById('mix-modal').classList.remove('open');
+}
+function doClone(){
+  const src=allMixes().find(m=>m.id===DB.currentModalMixId);
+  if(!src)return;
+  const newMix={...JSON.parse(JSON.stringify(src)),id:'u'+Date.now(),name:document.getElementById('clone-name').value||src.name+' (copy)',notes:document.getElementById('clone-notes').value,preset:false,created:new Date().toISOString()};
+  DB.mixes.push(newMix);
+  saveDB();
+  document.getElementById('clone-modal').classList.remove('open');
+  renderMixes();
+}
+
+// ===== GROW LOG =====
+function openNewGrow(preselectedMixId){
+  const sel=document.getElementById('grow-mix-select');
+  sel.innerHTML=allMixes().map(m=>`<option value="${m.id}" ${m.id===preselectedMixId?'selected':''}>${m.name}</option>`).join('');
+  document.getElementById('grow-start').value=new Date().toISOString().split('T')[0];
+  document.getElementById('grow-notes').value='';
+  document.getElementById('grow-location').value='';
+  document.getElementById('grow-modal').classList.add('open');
+}
+function closeGrowModal(){document.getElementById('grow-modal').classList.remove('open');}
+function saveGrow(){
+  const mixId=document.getElementById('grow-mix-select').value;
+  const mix=allMixes().find(m=>m.id===mixId);
+  const plants=+document.getElementById('grow-plants').value||1;
+  const rows=+document.getElementById('grow-rows').value||0;
+  const perRow=+document.getElementById('grow-per-row').value||0;
+  const systemType=document.getElementById('grow-system').value;
+  const medium=document.getElementById('grow-medium').value;
+  const envType=document.getElementById('grow-env').value;
+  const lightSource=document.getElementById('grow-light-source').value;
+  const spacing=+document.getElementById('grow-spacing').value||0;
+  const potSize=+document.getElementById('grow-pot-size').value||0;
+  const harvest=document.getElementById('grow-harvest').value;
+  const cropOverride=document.getElementById('grow-crop').value;
+  const cultivar=document.getElementById('grow-cultivar').value;
+  const plantSource=document.getElementById('grow-plant-source').value;
+  const seedSource=document.getElementById('grow-seed-source').value;
+  const ageAtTransplant=document.getElementById('grow-age').value;
+  const rootType=document.getElementById('grow-root-type').value;
+  const finalCrop=cropOverride||(mix?mix.crop:'');
+
+  // Auto-build setup summary for first note
+  const setupParts=[
+    `System: ${systemType}`,
+    `Medium: ${medium}`,
+    `Environment: ${envType}`,
+    `Crop: ${finalCrop}${cultivar?' — '+cultivar:''}`,
+    `Plants: ${plants}`,
+    plantSource?`Source: ${plantSource}`:null,
+    seedSource?`Supplier: ${seedSource}`:null,
+    ageAtTransplant?`Age at transplant: ${ageAtTransplant}`:null,
+    rootType?`Root type: ${rootType}`:null,
+    rows?`Rows: ${rows}`:null,
+    perRow?`Plants/row: ${perRow}`:null,
+    spacing?`Spacing: ${spacing}cm`:null,
+    potSize?`Pot: ${potSize}L`:null,
+    `Light: ${lightSource}, ${document.getElementById('grow-light').value||16}h/day`,
+    harvest?`Expected harvest: ${harvest}`:null,
+  ].filter(Boolean).join(' · ');
+
+  const userNotes=document.getElementById('grow-notes').value||'';
+  const firstNote=`Grow started. ${setupParts}${userNotes?'\n'+userNotes:''}`;
+
+  const grow={
+    id:'g'+Date.now(),
+    mixId, mixName:mix?mix.name:'Unknown',
+    crop:finalCrop, stage:mix?mix.stage:'',
+    cultivar, plantSource, seedSource, ageAtTransplant, rootType,
+    start:document.getElementById('grow-start').value,
+    end:null,
+    location:document.getElementById('grow-location').value,
+    vol:+document.getElementById('grow-vol').value||100,
+    lightHours:+document.getElementById('grow-light').value||16,
+    lightSource, topupInterval:+document.getElementById('grow-topup').value||7,
+    systemType, medium, envType,
+    plants, rows, perRow, spacing, potSize,
+    harvest,
+    notes:[{date:new Date().toISOString(), text:firstNote, photos:[]}],
+    topups:[], envReadings:[],
+  };
+  DB.grows.push(grow);
+  saveDB();
+  closeGrowModal();
+  renderLog();
+}
+
+function renderLog(){
+  const el=document.getElementById('log-list');
+  if(DB.grows.length===0){el.innerHTML='<div style="color:var(--text3);text-align:center;padding:40px;font-size:13px">No grows logged yet. Start a grow from the Mix library.</div>';return;}
+  el.innerHTML=[...DB.grows].reverse().map(g=>{
+    const active=!g.end;
+    const days=Math.floor((new Date()-(new Date(g.start)))/86400000);
+    const lastReading=[...g.notes].reverse().find(n=>n.ec||n.ph);
+    const ecBadge=lastReading&&lastReading.ec?`<span class="tag tag-teal">EC ${lastReading.ec}</span>`:'';
+    const phBadge=lastReading&&lastReading.ph?`<span class="tag ${lastReading.ph<5.5||lastReading.ph>7?'tag-amber':'tag-green'}">pH ${lastReading.ph}</span>`:'';
+    return `<div class="log-item" onclick="openGrowDetail('${g.id}')" style="cursor:pointer">
+      <div class="log-header">
+        <div>
+          <div class="log-mix-name"><span class="${active?'log-status-active':'log-status-closed'}"></span>${g.mixName}</div>
+          <div style="font-size:11px;color:var(--text3)">${g.crop||''}${g.cultivar?' — '+g.cultivar:''} · ${g.location||'No location'}${g.systemType?' · '+g.systemType:''}</div>
+        </div>
+        <div class="spacer"></div>
+        <div style="text-align:right">
+          <div class="log-date">${g.start}</div>
+          <div style="font-size:11px;color:var(--text3)">${active?`${days}d running`:`Ended ${g.end}`}</div>
+        </div>
+      </div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        <span class="tag ${active?'tag-green':'tag-dim'}">${active?'active':'closed'}</span>
+        ${g.systemType?`<span class="tag tag-blue">${g.systemType}</span>`:''}
+        ${g.plants?`<span class="tag tag-dim">${g.plants} plant${g.plants>1?'s':''}</span>`:''}
+        <span class="tag tag-dim">${g.vol}L</span>
+        <span class="tag tag-dim">${g.lightHours}h light</span>
+        ${g.topups.length>0?`<span class="tag tag-teal">${g.topups.length} top-up${g.topups.length>1?'s':''}</span>`:''}
+        ${ecBadge}${phBadge}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openGrowDetail(id){
+  const g=DB.grows.find(x=>x.id===id);
+  if(!g)return;
+  DB.currentGrowId=id;
+  const active=!g.end;
+  const days=Math.floor((new Date()-(new Date(g.start)))/86400000);
+  let html=`
+    <div class="modal-title">${g.mixName}</div>
+    <div class="row" style="margin-bottom:10px;flex-wrap:wrap;gap:5px">
+      <span class="tag ${active?'tag-green':'tag-dim'}">${active?'active':'closed'}</span>
+      <span class="tag tag-blue">${g.crop||'—'}${g.cultivar?' — '+g.cultivar:''}</span>
+      ${g.systemType?`<span class="tag tag-teal">${g.systemType}</span>`:''}
+      ${g.medium&&g.medium!=='None (water only)'?`<span class="tag tag-dim">${g.medium}</span>`:''}
+      ${g.envType?`<span class="tag tag-dim">${g.envType}</span>`:''}
+      ${g.plantSource?`<span class="tag tag-dim">${g.plantSource}</span>`:''}
+      <span class="tag tag-dim">${g.location||'No location'}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px">
+      <div class="metric"><div class="lbl">Days running</div><div class="val">${days}</div></div>
+      <div class="metric"><div class="lbl">Plants</div><div class="val">${g.plants||'—'}</div></div>
+      <div class="metric"><div class="lbl">Reservoir</div><div class="val">${g.vol}L</div></div>
+      <div class="metric"><div class="lbl">Light</div><div class="val">${g.lightHours}h</div><div class="unit">${g.lightSource||''}</div></div>
+      <div class="metric"><div class="lbl">Top-ups</div><div class="val">${g.topups.length}</div></div>
+    </div>
+    ${(g.rows||g.perRow||g.spacing||g.potSize||g.seedSource||g.ageAtTransplant||g.rootType||g.harvest)?`<div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:2">
+      ${g.rows?`Rows: <strong style="color:var(--text2)">${g.rows}</strong> &nbsp;`:''} 
+      ${g.perRow?`Plants/row: <strong style="color:var(--text2)">${g.perRow}</strong> &nbsp;`:''}
+      ${g.spacing?`Spacing: <strong style="color:var(--text2)">${g.spacing}cm</strong> &nbsp;`:''}
+      ${g.seedSource?`Supplier: <strong style="color:var(--text2)">${g.seedSource}</strong> &nbsp;`:''}
+      ${g.ageAtTransplant?`Age: <strong style="color:var(--text2)">${g.ageAtTransplant}</strong> &nbsp;`:''}
+      ${g.rootType?`Root: <strong style="color:var(--text2)">${g.rootType}</strong> &nbsp;`:''}
+      ${g.potSize?`Pot: <strong style="color:var(--text2)">${g.potSize}L</strong> &nbsp;`:''}
+      ${g.harvest?`Expected harvest: <strong style="color:var(--green)">${g.harvest}</strong>`:''}
+    </div>`:''}`;
+
+  if(active){
+    html+=`<div style="margin-bottom:12px">
+      <h3>Add reading / entry</h3>
+      <div class="grid4" style="margin-bottom:8px">
+        <div><label>pH reading</label><input type="number" id="gd-ph" step="0.01" min="0" max="14" placeholder="e.g. 6.1" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--mono);font-size:12px;width:100%"></div>
+        <div><label>EC reading (mS/cm)</label><input type="number" id="gd-ec" step="0.01" min="0" placeholder="e.g. 2.0" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--mono);font-size:12px;width:100%"></div>
+        <div><label>Sol temp (°C)</label><input type="number" id="gd-stemp" step="0.1" placeholder="optional" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--mono);font-size:12px;width:100%"></div>
+        <div><label>Air temp (°C)</label><input type="number" id="gd-atemp" step="0.1" placeholder="optional" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--mono);font-size:12px;width:100%"></div>
+      </div>
+      <div id="gd-ecph-alerts" style="margin-bottom:8px"></div>
+      <textarea id="gd-note" placeholder="Observations, plant health, any issues..." style="margin-bottom:6px"></textarea>
+      <div class="row">
+        <button class="btn btn-ghost btn-sm" onclick="addGrowNote('${id}')">Add entry</button>
+        <button class="btn btn-amber btn-sm" onclick="logTopup('${id}')">Log top-up</button>
+      </div>
+    </div>`;
+  }
+
+  html+=`<h3>Log</h3>`;
+  html+=[...g.notes].reverse().map(n=>{
+    const badges=[];
+    if(n.ph) badges.push(`<span class="tag ${n.ph<5.5||n.ph>7?'tag-amber':'tag-green'}">pH ${n.ph}</span>`);
+    if(n.ec) badges.push(`<span class="tag ${n.ec<0.8||n.ec>3.5?'tag-amber':'tag-teal'}">EC ${n.ec}</span>`);
+    if(n.stemp) badges.push(`<span class="tag tag-dim">Sol ${n.stemp}°C</span>`);
+    if(n.atemp) badges.push(`<span class="tag tag-dim">Air ${n.atemp}°C</span>`);
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border2);${n.isAlert?'background:rgba(248,113,113,0.05);padding:8px;border-radius:4px;':''}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap">
+        <span style="font-size:11px;color:${n.isAlert?'var(--red)':'var(--green)'}">${new Date(n.date).toLocaleString('en-AU')}</span>
+        ${badges.join('')}
+      </div>
+      <div style="font-size:12px;color:${n.isAlert?'var(--red)':'var(--text2)'}">${n.text}</div>
+    </div>`;
+  }).join('');
+
+  if(g.topups.length>0){
+    html+=`<h3 style="margin-top:12px">Top-up log</h3>`;
+    html+=g.topups.map(t=>`<div style="font-size:12px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border2)">${t.date} — ${t.vol}L added · ${t.notes||''}</div>`).join('');
+  }
+
+  document.getElementById('grow-detail-content').innerHTML=html;
+  document.getElementById('grow-end-btn').style.display=active?'':'none';
+  document.getElementById('grow-detail-modal').classList.add('open');
+
+  // Live alert checking
+  setTimeout(()=>{
+    const phEl=document.getElementById('gd-ph');
+    const ecEl=document.getElementById('gd-ec');
+    if(phEl) phEl.addEventListener('input',()=>checkGrowAlerts(+phEl.value||null,+ecEl.value||null,g.crop,g.stage||'Vegetative growth'));
+    if(ecEl) ecEl.addEventListener('input',()=>checkGrowAlerts(+phEl.value||null,+ecEl.value||null,g.crop,g.stage||'Vegetative growth'));
+  },100);
+}
+
+function addGrowNote(id){
+  const g=DB.grows.find(x=>x.id===id);
+  if(!g)return;
+  const ph = document.getElementById('gd-ph') ? +document.getElementById('gd-ph').value||null : null;
+  const ec = document.getElementById('gd-ec') ? +document.getElementById('gd-ec').value||null : null;
+  const stemp = document.getElementById('gd-stemp') ? document.getElementById('gd-stemp').value : '';
+  const atemp = document.getElementById('gd-atemp') ? document.getElementById('gd-atemp').value : '';
+  const text = (document.getElementById('gd-note').value||'').trim();
+
+  // Build auto-summary of readings
+  const readingParts = [];
+  if(ph) readingParts.push(`pH ${ph}`);
+  if(ec) readingParts.push(`EC ${ec} mS/cm`);
+  if(stemp) readingParts.push(`Sol temp ${stemp}°C`);
+  if(atemp) readingParts.push(`Air ${atemp}°C`);
+  const readingStr = readingParts.length ? '['+readingParts.join(' · ')+']' : '';
+
+  const fullText = [readingStr, text].filter(Boolean).join(' ');
+  if(!fullText){
+    // Check alerts even with no text
+    checkGrowAlerts(ph, ec, g.crop, g.stage||'Vegetative growth');
+    return;
+  }
+
+  g.notes.push({date:new Date().toISOString(), text:fullText, photos:[], ph, ec, stemp:+stemp||null, atemp:+atemp||null});
+
+  // Check if pH/EC out of range — add automatic alert note
+  const alerts = getECpHAlerts(ec, ph, null, g.crop, g.stage||'Vegetative growth');
+  const warns = alerts.filter(a=>a.type==='warn');
+  if(warns.length>0){
+    g.notes.push({date:new Date().toISOString(), text:'⚠ AUTO-ALERT: '+warns.map(a=>a.text).join(' | '), photos:[], isAlert:true});
+  }
+
+  saveDB();
+  openGrowDetail(id);
+}
+
+function checkGrowAlerts(ph, ec, crop, stage){
+  const alerts = getECpHAlerts(ec||null, ph||null, null, crop, stage);
+  const el = document.getElementById('gd-ecph-alerts');
+  if(el && (ph||ec)) el.innerHTML = alerts.map(a=>`<div class="alert ${a.type==='warn'?'alert-warn':a.type==='ok'?'alert-ok':'alert-info'}" style="font-size:11px;padding:6px 10px">${a.text}</div>`).join('');
+}
+
+function logTopup(id){
+  const g=DB.grows.find(x=>x.id===id);
+  if(!g)return;
+  const vol=prompt('How many litres topped up?','10');
+  const notes=prompt('Notes (optional):','');
+  if(vol){
+    g.topups.push({date:new Date().toLocaleDateString('en-AU'),vol:+vol,notes});
+    g.notes.push({date:new Date().toISOString(),text:`Top-up: ${vol}L added. ${notes||''}`.trim(),photos:[]});
+    saveDB();
+    openGrowDetail(id);
+    renderLog();
+  }
+}
+
+function endGrow(){
+  if(!confirm('End this grow?'))return;
+  const g=DB.grows.find(x=>x.id===DB.currentGrowId);
+  if(g){g.end=new Date().toISOString().split('T')[0];g.notes.push({date:new Date().toISOString(),text:'Grow ended.',photos:[]});}
+  saveDB();
+  closeGrowDetail();
+  renderLog();
+}
+function closeGrowDetail(){document.getElementById('grow-detail-modal').classList.remove('open');}
+
+// ===== ENVIRONMENT =====
+let bomData=null;
+function fetchBOM(){
+  // BOM JSON feeds for Charleville (station 044021)
+  // Direct BOM fetch blocked by CORS in browser — use Open-Meteo as fallback (free, no key)
+  const url='https://api.open-meteo.com/v1/forecast?latitude=-26.41&longitude=146.26&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=Australia/Brisbane';
+  fetch(url).then(r=>r.json()).then(d=>{
+    const c=d.current;
+    bomData={temp:c.temperature_2m,hum:c.relative_humidity_2m,rain:c.precipitation,wind:c.wind_speed_10m,updated:c.time};
+    document.getElementById('tb-temp').textContent=c.temperature_2m+'°C';
+    document.getElementById('tb-hum').textContent=c.relative_humidity_2m+'%RH';
+    document.getElementById('tb-rain').textContent=c.precipitation+'mm';
+    updateBomDisplay();
+    document.getElementById('env-bom-status').textContent='✓ Open-Meteo data loaded for Charleville (−26.41°, 146.26°). Updated: '+c.time;
+    document.getElementById('env-bom-status').className='alert alert-ok';
+    // Pre-fill env inputs
+    document.getElementById('env-temp').value=c.temperature_2m;
+    document.getElementById('env-hum').value=c.relative_humidity_2m;
+    document.getElementById('env-rain').value=c.precipitation;
+    document.getElementById('env-wind').value=c.wind_speed_10m;
+  }).catch(()=>{
+    document.getElementById('env-bom-status').textContent='Could not fetch live weather data. Enter conditions manually below.';
+    document.getElementById('env-bom-status').className='alert alert-warn';
+  });
+}
+
+function updateBomDisplay(){
+  if(!bomData){document.getElementById('bom-data-display').innerHTML='<div style="color:var(--text3);font-size:12px">No data loaded.</div>';return;}
+  document.getElementById('bom-data-display').innerHTML=`
+    <div class="grid3">
+      <div class="metric"><div class="lbl">Temperature</div><div class="val">${bomData.temp}°</div><div class="unit">°C</div></div>
+      <div class="metric"><div class="lbl">Humidity</div><div class="val">${bomData.hum}%</div><div class="unit">RH</div></div>
+      <div class="metric"><div class="lbl">Rainfall</div><div class="val">${bomData.rain}</div><div class="unit">mm (1h)</div></div>
+      <div class="metric"><div class="lbl">Wind</div><div class="val">${bomData.wind}</div><div class="unit">km/h</div></div>
+    </div>`;
+}
+
+function renderEnvPage(){
+  updateBomDisplay();
+  renderEnvLog();
+  if(!document.getElementById('env-datetime').value)
+    document.getElementById('env-datetime').value=new Date().toISOString().slice(0,16);
+}
+
+function logEnvEntry(){
+  const entry={
+    date:document.getElementById('env-datetime').value||new Date().toISOString(),
+    temp:document.getElementById('env-temp').value,
+    hum:document.getElementById('env-hum').value,
+    rain:document.getElementById('env-rain').value,
+    wind:document.getElementById('env-wind').value,
+    solTemp:document.getElementById('env-sol-temp').value,
+  };
+  DB.envLog.push(entry);
+  if(DB.envLog.length>500)DB.envLog=DB.envLog.slice(-500);
+  saveDB();
+  renderEnvLog();
+}
+
+function renderEnvLog(){
+  const el=document.getElementById('env-log-table');
+  if(DB.envLog.length===0){el.innerHTML='<div style="color:var(--text3);font-size:12px;text-align:center;padding:20px">No readings logged yet.</div>';return;}
+  el.innerHTML=`<table><thead><tr><th>Date/time</th><th class="num">Temp °C</th><th class="num">Humidity %</th><th class="num">Rain mm</th><th class="num">Wind km/h</th><th class="num">Sol temp °C</th></tr></thead><tbody>`
+    +[...DB.envLog].reverse().slice(0,50).map(e=>`<tr><td>${new Date(e.date).toLocaleString('en-AU')}</td><td class="num">${e.temp||'—'}</td><td class="num">${e.hum||'—'}</td><td class="num">${e.rain||'—'}</td><td class="num">${e.wind||'—'}</td><td class="num">${e.solTemp||'—'}</td></tr>`).join('')
+    +`</tbody></table><div style="font-size:11px;color:var(--text3);margin-top:6px">Showing last 50 of ${DB.envLog.length} readings.</div>`;
+}
+
+// ===== DASHBOARD =====
+function renderDashboard(){
+  document.getElementById('dash-date').textContent=new Date().toLocaleDateString('en-AU',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const activeGrows=DB.grows.filter(g=>!g.end);
+  document.getElementById('dash-active-mixes').innerHTML=activeGrows.length>0
+    ?`<div class="alert alert-ok">🌱 ${activeGrows.length} active grow${activeGrows.length>1?'s':''}: ${activeGrows.map(g=>g.mixName).join(', ')}</div>`
+    :'<div class="alert alert-info" style="font-size:12px">No active grows. Start one from the Mix library.</div>';
+
+  const el=document.getElementById('dash-grows');
+  el.innerHTML=activeGrows.length===0?'<div style="font-size:12px;color:var(--text3)">No active grows.</div>':
+    activeGrows.map(g=>{
+      const days=Math.floor((new Date()-(new Date(g.start)))/86400000);
+      const nextTopup=g.topupInterval-(days%g.topupInterval);
+      // Find last reading with EC or pH
+      const lastReading=[...g.notes].reverse().find(n=>n.ec||n.ph);
+      const ecBadge=lastReading&&lastReading.ec?`<span class="tag tag-teal">EC ${lastReading.ec}</span>`:'';
+      const phBadge=lastReading&&lastReading.ph?`<span class="tag ${lastReading.ph<5.5||lastReading.ph>7?'tag-amber':'tag-green'}">pH ${lastReading.ph}</span>`:'';
+      return `<div class="card" style="cursor:pointer;margin-bottom:8px" onclick="nav('log')">
+        <div style="font-family:var(--serif);font-style:italic;font-size:14px;color:var(--text)">${g.mixName}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${g.crop||''} · ${g.systemType||''} · ${g.location||'no location'} · started ${g.start}</div>
+        <div class="row"><span class="tag tag-green">${days}d</span>${g.plants?`<span class="tag tag-dim">${g.plants} plants</span>`:''}<span class="tag tag-blue">${g.vol}L</span><span class="tag ${nextTopup<=2?'tag-amber':'tag-dim'}">top-up in ${nextTopup}d</span>${ecBadge}${phBadge}</div>
+      </div>`;
+    }).join('');
+
+  // Env card
+  const eg=document.getElementById('dash-env-grid');
+  eg.innerHTML=bomData?`
+    <div class="metric"><div class="lbl">Temp</div><div class="val">${bomData.temp}°</div></div>
+    <div class="metric"><div class="lbl">Humidity</div><div class="val">${bomData.hum}%</div></div>
+    <div class="metric"><div class="lbl">Rain</div><div class="val">${bomData.rain}mm</div></div>`
+    :`<div style="font-size:11px;color:var(--text3);grid-column:1/-1">Weather data unavailable. <span style="cursor:pointer;color:var(--green)" onclick="nav('environment')">Open environment →</span></div>`;
+  document.getElementById('dash-env-note').textContent=bomData?`Updated: ${bomData.updated} · Open-Meteo / Charleville`:'';
+
+  // Water card
+  const sw=DB.sourceWater;
+  document.getElementById('dash-water-card').innerHTML=`
+    <div class="grid3">
+      <div class="metric"><div class="lbl">pH</div><div class="val ${sw.ph>8?'result-over':''}">${sw.ph}</div></div>
+      <div class="metric"><div class="lbl">EC</div><div class="val">${sw.ec}</div><div class="unit">mS/cm</div></div>
+      <div class="metric"><div class="lbl">Na</div><div class="val ${sw.na>150?'result-over':''}">${sw.na}</div><div class="unit">ppm</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">Charleville artesian bore · Alk ${sw.alk} mg/L CaCO₃ · <span style="cursor:pointer;color:var(--green)" onclick="nav('water')">Edit →</span></div>`;
+}
+
+// ===== DATA =====
+function exportData(){
+  const payload={version:1,exported:new Date().toISOString(),sourceWater:DB.sourceWater,salts:DB.salts,mixes:DB.mixes,grows:DB.grows,envLog:DB.envLog};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`hydromanager_${new Date().toISOString().split('T')[0]}.json`;a.click();
+}
+function importData(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{try{
+    const d=JSON.parse(ev.target.result);
+    if(d.mixes)DB.mixes=[...DB.mixes,...d.mixes.filter(m=>!DB.mixes.find(x=>x.id===m.id))];
+    if(d.grows)DB.grows=[...DB.grows,...d.grows.filter(g=>!DB.grows.find(x=>x.id===g.id))];
+    if(d.envLog)DB.envLog=[...DB.envLog,...d.envLog];
+    if(d.sourceWater)DB.sourceWater=d.sourceWater;
+    saveDB();renderDataSummary();alert('Import successful.');
+  }catch(err){alert('Import failed: '+err.message);}};
+  r.readAsText(file);
+}
+function renderDataSummary(){
+  document.getElementById('data-summary').innerHTML=`
+    <div style="font-size:12px;color:var(--text2);line-height:2.2">
+      Mixes (user): <strong>${DB.mixes.length}</strong><br>
+      Preset mixes: <strong>${PRESET_MIXES.length}</strong><br>
+      Grow logs: <strong>${DB.grows.length}</strong><br>
+      Env readings: <strong>${DB.envLog.length}</strong><br>
+      Storage used: <strong>${(JSON.stringify(DB).length/1024).toFixed(1)} KB</strong>
+    </div>`;
+}
+function resetData(){
+  if(!confirm('Reset ALL data? This cannot be undone.'))return;
+  localStorage.removeItem('hydromanager_db');
+  DB={sourceWater:{...DEFAULT_SW},salts:JSON.parse(JSON.stringify(DEFAULT_SALTS)),mixes:[],grows:[],envLog:[],lastCalc:null,currentModalMixId:null,currentGrowId:null};
+  saveDB();renderDashboard();alert('Data reset to defaults.');
+}
+
+// ===== INIT =====
+loadDB();
+renderDashboard();
+renderSalts();
+fetchBOM();
+setInterval(()=>fetchBOM(),600000); // refresh every 10min
+checkSwAlerts();
+</script>
+</body>
+</html>
