@@ -329,36 +329,80 @@ tr:hover td{background:var(--bg3)}
   </div>
 
   <div class="tab-content" id="ct-acid">
+
+    <!-- STEP 1: Water & target -->
     <div class="card">
-      <div class="card-title">pH / Alkalinity correction</div>
-      <div class="alert alert-info">Charleville source water alkalinity: <strong>153 mg/L as CaCO₃</strong> (HCO₃ ≈ 186 mg/L). Source pH: 8.55. Acid is required to bring the solution to your target pH.</div>
-      <div class="grid3" style="margin-top:12px">
-        <div><label>Source alkalinity (mg/L CaCO₃)</label><input type="number" id="acid-alk" value="153" min="0"></div>
-        <div><label>Target alkalinity (mg/L CaCO₃)</label><input type="number" id="acid-alk-target" value="30" min="0"></div>
-        <div><label>Acid type</label>
-          <select id="acid-type">
-            <option value="h3po4">Phosphoric acid H₃PO₄ (75%)</option>
-            <option value="hno3">Nitric acid HNO₃ (68%)</option>
-            <option value="h2so4">Sulphuric acid H₂SO₄ (98%)</option>
-            <option value="citric">Citric acid (anhydrous)</option>
+      <div class="card-title">Step 1 — Water & pH targets</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+        <div><label>Source pH</label><input type="number" id="acid-src-ph" value="8.55" step="0.01" min="0" max="14" oninput="calcAcid()"></div>
+        <div><label>Target pH</label><input type="number" id="acid-tgt-ph" value="5.8" step="0.01" min="4" max="8" oninput="calcAcid()"></div>
+        <div><label>Source alk (mg/L CaCO₃)</label><input type="number" id="acid-alk" value="153" min="0" oninput="calcAcid()"></div>
+        <div><label>Reservoir volume (L)</label><input type="number" id="acid-vol" value="100" min="0.1" step="0.5" oninput="calcAcid()"></div>
+        <div><label>Direction</label>
+          <select id="acid-direction" onchange="toggleAcidBase();calcAcid()">
+            <option value="down">pH Down (acid)</option>
+            <option value="up">pH Up (base)</option>
           </select>
         </div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="calcAcid()" style="margin-top:12px">Calculate acid dose</button>
-      <div id="acid-result" style="margin-top:12px"></div>
+      <div id="acid-direction-alert" class="alert alert-info" style="margin-top:10px;font-size:12px">
+        Charleville source water: pH 8.55, alkalinity 153 mg/L CaCO₃. Acid is always required before use.
+      </div>
     </div>
-    <div class="card" style="margin-top:0">
-      <div class="card-title">Acid type guide</div>
-      <table>
-        <thead><tr><th>Acid</th><th>Nutrient added</th><th>Best for</th><th>Notes</th></tr></thead>
-        <tbody>
-          <tr><td>H₃PO₄ (phosphoric)</td><td>P</td><td>General — most common</td><td>Adds P to solution — account in solver</td></tr>
-          <tr><td>HNO₃ (nitric)</td><td>N-NO₃</td><td>High-K crops</td><td>Corrosive — handle with care</td></tr>
-          <tr><td>H₂SO₄ (sulphuric)</td><td>S</td><td>Low-Ca water</td><td>Very corrosive — dilute carefully</td></tr>
-          <tr><td>Citric acid</td><td>None</td><td>Organic/hobby</td><td>Temporary — metabolised by microbes</td></tr>
-        </tbody>
-      </table>
+
+    <!-- STEP 2: Product selection -->
+    <div class="card" id="acid-product-card">
+      <div class="card-title">Step 2 — Select product</div>
+      <div id="acid-product-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px"></div>
     </div>
+
+    <!-- STEP 3: Result -->
+    <div id="acid-result-card" style="display:none">
+      <div class="card" style="border-color:var(--green3)">
+        <div class="card-title" style="color:var(--green)">Step 3 — Dose & nutrient impact</div>
+        <div id="acid-result-content"></div>
+      </div>
+
+      <!-- Nutrient feedback -->
+      <div class="card" id="acid-nutr-feedback" style="display:none">
+        <div class="card-title">⚠ Nutrient contribution — update your targets</div>
+        <div id="acid-nutr-content"></div>
+        <button class="btn btn-amber btn-sm" onclick="applyAcidNutrToTargets()" style="margin-top:10px">
+          Apply to nutrient targets & re-solve →
+        </button>
+      </div>
+
+      <!-- Step by step guide -->
+      <div class="card">
+        <div class="card-title">Step-by-step mixing guide</div>
+        <div id="acid-steps"></div>
+      </div>
+    </div>
+
+    <!-- Product reference table -->
+    <div class="card">
+      <div class="card-title">Product reference</div>
+      <div style="overflow-x:auto">
+        <table id="acid-ref-table" style="font-size:12px">
+          <thead>
+            <tr>
+              <th>Product / brand</th>
+              <th>Type</th>
+              <th>Strength</th>
+              <th class="num">meq/mL or meq/g</th>
+              <th>Nutrient added</th>
+              <th>Safety</th>
+              <th>Best for</th>
+            </tr>
+          </thead>
+          <tbody id="acid-ref-body"></tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px">
+        ⚠ Always add acid/base TO water slowly — never add water to concentrated acid. Wear gloves and eye protection. Add in small increments and recheck pH. Citric acid is metabolised by microbes in reservoir — pH will drift back up within days.
+      </div>
+    </div>
+
   </div>
 
   <div class="tab-content" id="ct-save">
@@ -1201,6 +1245,7 @@ function renderCalcPage(){
 
   // If last calc, render results
   if(DB.lastCalc)renderResults();
+  setTimeout(initAcidTab, 100);
 }
 
 function loadMixToCalc(){
@@ -1241,33 +1286,239 @@ function saveCurrentMix(){
 }
 
 // ===== ACID CALC =====
-const ACID_DATA={
-  h3po4:{name:'Phosphoric acid (H₃PO₄ 75%)',mw:98,purity:0.75,density:1.57,nutrient:'P',pctNutr:31.6,meqPerMl:12},
-  hno3:{name:'Nitric acid (HNO₃ 68%)',mw:63,purity:0.68,density:1.41,nutrient:'N-NO₃',pctNutr:22.0,meqPerMl:15.2},
-  h2so4:{name:'Sulphuric acid (H₂SO₄ 98%)',mw:98,purity:0.98,density:1.84,nutrient:'S',pctNutr:32.7,meqPerMl:18.4},
-  citric:{name:'Citric acid (anhydrous)',mw:192,purity:1.0,density:1.54,nutrient:'None',pctNutr:0,meqPerMl:15.6},
-};
-function calcAcid(){
-  const alkIn=+document.getElementById('acid-alk').value||153;
-  const alkTgt=+document.getElementById('acid-alk-target').value||30;
-  const acidType=document.getElementById('acid-type').value;
-  const vol=+document.getElementById('c-vol').value||100;
-  const acid=ACID_DATA[acidType];
-  // meq to neutralise = (alkIn - alkTgt) / 50 * vol_L
-  const meqToNeutralise=(alkIn-alkTgt)/50*vol;
-  const mlAcid=meqToNeutralise/acid.meqPerMl;
-  const gAcid=mlAcid*acid.density;
-  const nutrAdded=acid.pctNutr>0?(gAcid*acid.pctNutr/100/vol*1000).toFixed(1):null;
+// ===== pH / ACID-BASE MANAGEMENT =====
+const PH_PRODUCTS = [
+  // pH DOWN — acids
+  {id:'h3po4_75', name:'Phosphoric acid', brand:'General pH Down', conc:'75% w/w', mw:98, purity:0.75, density:1.57, ep:1.8, nutrient:'p', nutrPct:31.6, isSolid:false, isBase:false,
+   safety:'Corrosive. Gloves + goggles. Dilute before handling.',
+   bestFor:'General use — most common. Adds P which must be accounted for in solver.',
+   color:'var(--amber)'},
+  {id:'h3po4_85', name:'Phosphoric acid', brand:'Flairform pH Down (phosphoric)', conc:'85% w/w', mw:98, purity:0.85, density:1.685, ep:1.8, nutrient:'p', nutrPct:31.6, isSolid:false, isBase:false,
+   safety:'Corrosive. Gloves + goggles.',
+   bestFor:'Higher strength than 75% — use smaller doses. Common in AU hydro shops.',
+   color:'var(--amber)'},
+  {id:'citric_50', name:'Citric acid solution', brand:'Flairform pH Down (citric) / organic pH down', conc:'50% w/w liquid', mw:192, purity:0.50, density:1.23, ep:2.5, nutrient:null, nutrPct:0, isSolid:false, isBase:false,
+   safety:'Low hazard. Still wear gloves.',
+   bestFor:'Organic/hobby grows. WARNING: citric acid is metabolised by microbes — pH will drift back up within 24–72h in a live reservoir.',
+   color:'var(--teal)'},
+  {id:'citric_powder', name:'Citric acid powder', brand:'Food grade citric acid', conc:'anhydrous powder', mw:192, purity:1.0, density:1.54, ep:2.5, nutrient:null, nutrPct:0, isSolid:true, isBase:false,
+   safety:'Low hazard. Fine dust — avoid inhaling.',
+   bestFor:'Organic/hobby. Same microbial drift warning as liquid citric.',
+   color:'var(--teal)'},
+  {id:'hno3_68', name:'Nitric acid', brand:'Technical grade HNO₃', conc:'68% w/w', mw:63, purity:0.68, density:1.41, ep:1.0, nutrient:'nno3', nutrPct:22.2, isSolid:false, isBase:false,
+   safety:'VERY CORROSIVE. Fumes. Full PPE. Not recommended for home use.',
+   bestFor:'Professional growers. Adds N-NO₃ — useful when N is also low.',
+   color:'var(--red)'},
+  {id:'h2so4_98', name:'Sulphuric acid', brand:'Technical grade H₂SO₄', conc:'98% w/w', mw:98, purity:0.98, density:1.84, ep:2.0, nutrient:'s', nutrPct:32.7, isSolid:false, isBase:false,
+   safety:'EXTREMELY CORROSIVE. Violent reaction with water. Professional use only.',
+   bestFor:'When S is also low. Smallest volume needed of any acid.',
+   color:'var(--red)'},
+  // pH UP — bases
+  {id:'koh_45', name:'Potassium hydroxide', brand:'pH Up / General KOH solution', conc:'45% w/w liquid', mw:56, purity:0.45, density:1.45, ep:1.0, nutrient:'k', nutrPct:69.7, isSolid:false, isBase:true,
+   safety:'Corrosive. Gloves + goggles. Generates heat on dilution.',
+   bestFor:'General pH up. Adds K — account in solver when using significant amounts.',
+   color:'var(--blue)'},
+  {id:'khco3', name:'Potassium bicarbonate', brand:'Organic pH Up / KHCO₃', conc:'anhydrous powder', mw:100, purity:1.0, density:2.17, ep:1.0, nutrient:'k', nutrPct:39.1, isSolid:true, isBase:true,
+   safety:'Low hazard. Food safe.',
+   bestFor:'Gentle, organic-friendly pH up. Also adds K.',
+   color:'var(--blue)'},
+  {id:'caco3', name:'Calcium carbonate', brand:'Agricultural lime / chalk', conc:'powder', mw:100, purity:0.98, density:2.71, ep:2.0, nutrient:'ca', nutrPct:40.0, isSolid:true, isBase:true,
+   safety:'Low hazard. Dust mask when handling.',
+   bestFor:'Very slow dissolving. Better for pre-treating water than direct dosing.',
+   color:'var(--blue)'},
+];
 
-  document.getElementById('acid-result').innerHTML=`
-    <div class="alert alert-ok">
-      <strong>Acid dose: ${mlAcid.toFixed(1)} mL</strong> ${acid.name} per ${vol}L<br>
-      Mass equivalent: <strong>${gAcid.toFixed(1)} g</strong><br>
-      HCO₃ reduction: ${alkIn} → ${alkTgt} mg/L as CaCO₃<br>
-      ${nutrAdded?`Nutrient contribution: <strong>${nutrAdded} ppm ${acid.nutrient}</strong> added to solution — account for this in your targets.`:'No direct nutrient contribution.'}
+let selectedProductId = 'h3po4_85';
+let lastAcidCalc = null;
+
+function meqPerUnit(p){
+  const molPerUnit = p.isSolid
+    ? (p.purity * 1000) / p.mw          // meq per g (solid)
+    : (p.density * p.purity * 1000) / p.mw; // meq per mL (liquid)
+  return molPerUnit * Math.abs(p.ep);
+}
+
+function toggleAcidBase(){
+  const dir = document.getElementById('acid-direction').value;
+  // Re-render product grid showing only relevant products
+  renderAcidProductGrid(dir);
+  // Ensure selected product matches direction
+  const prod = PH_PRODUCTS.find(p=>p.id===selectedProductId);
+  if(prod && prod.isBase !== (dir==='up')){
+    selectedProductId = dir==='up' ? 'koh_45' : 'h3po4_85';
+  }
+  const srcPh = +document.getElementById('acid-src-ph').value||8.55;
+  const tgtPh = +document.getElementById('acid-tgt-ph').value||5.8;
+  const el = document.getElementById('acid-direction-alert');
+  if(dir==='up'){
+    el.className='alert alert-info';
+    el.innerHTML=`Adding base to raise pH from ${srcPh} to ${tgtPh}.`;
+  } else {
+    if(srcPh < tgtPh){
+      el.className='alert alert-warn';
+      el.innerHTML=`⚠ Source pH (${srcPh}) is already below target (${tgtPh}). No acid needed — use pH Up instead.`;
+    } else {
+      el.className='alert alert-info';
+      el.innerHTML=`Charleville source water: pH ${srcPh}, alkalinity ${document.getElementById('acid-alk').value||153} mg/L CaCO₃. Acid required before use.`;
+    }
+  }
+}
+
+function renderAcidProductGrid(dir){
+  const grid = document.getElementById('acid-product-grid');
+  const isBase = dir==='up';
+  const relevant = PH_PRODUCTS.filter(p=>p.isBase===isBase);
+  grid.innerHTML = relevant.map(p=>`
+    <div onclick="selectProduct('${p.id}')" id="prod-card-${p.id}" style="
+      background:var(--bg3);border:1px solid ${selectedProductId===p.id?p.color:'var(--border)'};
+      border-radius:var(--radius);padding:10px 12px;cursor:pointer;transition:border .15s">
+      <div style="font-size:12px;font-weight:500;color:var(--text)">${p.name}</div>
+      <div style="font-size:11px;color:${p.color};margin:2px 0">${p.brand}</div>
+      <div style="font-size:10px;color:var(--text3)">${p.conc}</div>
+      ${p.nutrient?`<div style="font-size:10px;color:var(--amber);margin-top:3px">Adds ${p.nutrient.toUpperCase()}</div>`:'<div style="font-size:10px;color:var(--green);margin-top:3px">No nutrient contribution</div>'}
+    </div>`).join('');
+}
+
+function selectProduct(id){
+  selectedProductId = id;
+  const dir = document.getElementById('acid-direction').value;
+  renderAcidProductGrid(dir);
+  calcAcid();
+}
+
+function calcAcid(){
+  const srcPh  = +document.getElementById('acid-src-ph').value||8.55;
+  const tgtPh  = +document.getElementById('acid-tgt-ph').value||5.8;
+  const alk    = +document.getElementById('acid-alk').value||153;
+  const vol    = +document.getElementById('acid-vol').value||100;
+  const dir    = document.getElementById('acid-direction')?.value||'down';
+  const prod   = PH_PRODUCTS.find(p=>p.id===selectedProductId);
+  if(!prod) return;
+
+  // Update border highlight
+  document.querySelectorAll('[id^="prod-card-"]').forEach(el=>{
+    const pid=el.id.replace('prod-card-','');
+    const p=PH_PRODUCTS.find(x=>x.id===pid);
+    el.style.borderColor = pid===selectedProductId?(p?p.color:'var(--green3)'):'var(--border)';
+  });
+
+  // Alkalinity-based meq calculation
+  // Target residual alkalinity at target pH (Henderson-Hasselbalch approximation)
+  // pH 5.8 → ~5 mg/L CaCO3 residual; pH 6.5 → ~20 mg/L; pH 7.0 → ~50 mg/L
+  const residualAlk = tgtPh >= 7.0 ? 50 : tgtPh >= 6.5 ? 20 : tgtPh >= 6.0 ? 10 : 5;
+  const alkToNeutralise = Math.max(0, alk - (dir==='down' ? residualAlk : 0));
+
+  // meq per litre to neutralise
+  const meqPerL = alkToNeutralise / 50; // 1 meq/L = 50 mg/L CaCO3
+  const totalMeq = meqPerL * vol;
+
+  const mqPerUnit = meqPerUnit(prod);
+  const dose = totalMeq / mqPerUnit;
+
+  // Nutrient contribution
+  let nutrPpm = 0, nutrKey = null, nutrLabel = null;
+  if(prod.nutrient && prod.nutrPct > 0){
+    const massG = prod.isSolid ? dose : dose * prod.density;
+    nutrPpm = (massG * prod.nutrPct/100 / vol) * 1000;
+    nutrKey = prod.nutrient;
+    nutrLabel = prod.nutrient.toUpperCase();
+  }
+
+  lastAcidCalc = {prod, dose, vol, nutrPpm, nutrKey, tgtPh, srcPh, alk};
+
+  // Build result
+  const doseStr = prod.isSolid
+    ? `<strong style="font-size:22px;color:var(--green)">${dose.toFixed(1)}g</strong>`
+    : `<strong style="font-size:22px;color:var(--green)">${dose.toFixed(1)}mL</strong>`;
+  const massG = prod.isSolid ? dose : dose*prod.density;
+
+  const resultCard = document.getElementById('acid-result-card');
+  resultCard.style.display='block';
+
+  document.getElementById('acid-result-content').innerHTML=`
+    <div class="grid4" style="margin-bottom:12px">
+      <div class="metric">${doseStr}<div class="lbl">${prod.isSolid?'grams':'millilitres'} per ${vol}L</div></div>
+      <div class="metric"><div class="lbl">Mass equivalent</div><div class="val">${massG.toFixed(1)}g</div></div>
+      <div class="metric"><div class="lbl">pH change</div><div class="val">${srcPh} → ${tgtPh}</div></div>
+      <div class="metric"><div class="lbl">Alk neutralised</div><div class="val">${alkToNeutralise.toFixed(0)}</div><div class="unit">mg/L CaCO₃</div></div>
     </div>
-    <div class="alert alert-warn">Always add acid to water, never water to acid. Add slowly while stirring. Re-check pH after mixing. Wear appropriate PPE.</div>
-  `;
+    <div style="font-size:12px;color:var(--text2)">
+      <strong>Product:</strong> ${prod.name} — ${prod.brand} (${prod.conc})<br>
+      <strong>Dose rate:</strong> ${prod.isSolid?(dose/vol*1000).toFixed(2)+' mg/L':((dose/vol)*1000).toFixed(2)+' µL/L ('+( dose/vol).toFixed(3)+' mL/L)'}<br>
+      ${nutrPpm>0?`<strong style="color:var(--amber)">Nutrient contribution: ${nutrPpm.toFixed(1)} ppm ${nutrLabel} added to solution</strong><br>`:''}
+      <strong>Safety:</strong> ${prod.safety}
+    </div>`;
+
+  // Nutrient feedback panel
+  const nutrPanel = document.getElementById('acid-nutr-feedback');
+  if(nutrPpm > 2 && nutrKey){
+    nutrPanel.style.display='block';
+    const currentTgt = +document.getElementById('t'+nutrKey.replace('nno3','N').replace('p','P').replace('k','K').replace('s','S'))?.value||0;
+    const newTgt = Math.max(0, currentTgt - nutrPpm);
+    document.getElementById('acid-nutr-content').innerHTML=`
+      <div style="font-size:12px;color:var(--text2);line-height:2">
+        This acid adds <strong style="color:var(--amber)">${nutrPpm.toFixed(1)} ppm ${nutrLabel}</strong> to your ${vol}L reservoir.<br>
+        Your current <strong>${nutrLabel}</strong> target is <strong>${currentTgt} ppm</strong>.<br>
+        Recommended adjusted target for solver: <strong style="color:var(--green)">${newTgt.toFixed(1)} ppm</strong> (${currentTgt} − ${nutrPpm.toFixed(1)}).<br>
+        Click below to apply this adjustment and re-run the solver with the correct net target.
+      </div>`;
+  } else {
+    nutrPanel.style.display='none';
+  }
+
+  // Step by step guide
+  const smallVol = vol <= 20;
+  document.getElementById('acid-steps').innerHTML=`
+    <ol style="font-size:12px;color:var(--text2);line-height:2.2;padding-left:18px">
+      <li>Fill your ${vol}L reservoir with source water (pH ${srcPh}).</li>
+      <li>Add and dissolve all your nutrient salts first — this affects buffering.</li>
+      <li>Measure actual pH with your meter after mixing salts.</li>
+      <li>${prod.isSolid
+          ? `Weigh out <strong style="color:var(--green)">${dose.toFixed(1)}g</strong> of ${prod.name}. Dissolve in a small amount of water first, then add to reservoir.`
+          : `Measure out <strong style="color:var(--green)">${dose.toFixed(1)}mL</strong> of ${prod.brand}.`
+        }</li>
+      <li>${smallVol
+          ? `<strong>Small volume caution:</strong> For ${vol}L, add in <strong>3–4 increments</strong> of ~${(dose/4).toFixed(2)}${prod.isSolid?'g':'mL'} each. Stir well and recheck pH between each addition — overshoot is very easy at small volumes.`
+          : `Add to reservoir slowly while stirring. Do NOT pour all at once.`
+        }</li>
+      <li>Stir well and wait 2–3 minutes before re-measuring pH.</li>
+      <li>Target pH: <strong style="color:var(--green)">${tgtPh}</strong>. If still high, add further small increments.</li>
+      ${prod.id.includes('citric')?'<li style="color:var(--amber)">⚠ Citric acid note: pH will drift back up within 24–72h as microbes metabolise citric acid. This is normal — reassess pH daily.</li>':''}
+    </ol>`;
+}
+
+function applyAcidNutrToTargets(){
+  if(!lastAcidCalc || !lastAcidCalc.nutrKey) return;
+  const {nutrPpm, nutrKey} = lastAcidCalc;
+  const idMap = {p:'tP', nno3:'tN', k:'tK', s:'tS'};
+  const inputId = idMap[nutrKey];
+  if(!inputId) return;
+  const el = document.getElementById(inputId);
+  if(el){
+    const current = +el.value||0;
+    el.value = Math.max(0, current - nutrPpm).toFixed(1);
+  }
+  // Switch to setup tab and re-run
+  calcTab('setup', document.querySelectorAll('#page-calculator .tab-btn')[0]);
+  setTimeout(()=>runSolver(), 100);
+}
+
+function initAcidTab(){
+  const dir = document.getElementById('acid-direction')?.value||'down';
+  renderAcidProductGrid(dir);
+  // Build reference table
+  const tbody = document.getElementById('acid-ref-body');
+  if(tbody) tbody.innerHTML = PH_PRODUCTS.map(p=>`
+    <tr>
+      <td><strong>${p.name}</strong><br><span style="font-size:10px;color:var(--text3)">${p.brand}</span></td>
+      <td><span class="tag ${p.isBase?'tag-blue':p.id.includes('citric')?'tag-teal':p.id.includes('hno3')||p.id.includes('h2so4')?'tag-red':'tag-amber'}">${p.isBase?'base':'acid'}</span></td>
+      <td>${p.conc}</td>
+      <td class="num">${meqPerUnit(p).toFixed(2)} meq/${p.isSolid?'g':'mL'}</td>
+      <td>${p.nutrient?`<span class="tag tag-amber">${p.nutrient.toUpperCase()} +${p.nutrPct}%</span>`:'<span class="tag tag-green">none</span>'}</td>
+      <td style="font-size:11px;color:${p.id.includes('hno3')||p.id.includes('h2so4')?'var(--red)':'var(--text3)'}">${p.safety}</td>
+      <td style="font-size:11px;color:var(--text3)">${p.bestFor}</td>
+    </tr>`).join('');
+  calcAcid();
 }
 
 // ===== MIX LIBRARY =====
